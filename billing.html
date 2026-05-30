@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وحدة فواتير الكهرباء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- إعداد الاتصال المشترك (نفس قاعدة البيانات للوحدتين) -->
+    <script src="js/config.js"></script>
+    <style>
+        * { font-variant-numeric: tabular-nums; }
+        input[type="number"], input[type="text"], td, th, span, div, p { -webkit-locale: "en"; }
+        body { font-family: 'Cairo', sans-serif; -webkit-locale: "en"; }
+
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        .section-card {
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            margin-bottom: 30px; overflow: hidden;
+            border: 2px solid #e2e8f0; transition: all 0.3s ease;
+        }
+        .section-card.collapsed { max-height: 70px; overflow: hidden; }
+
+        .section-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white; padding: 15px 20px;
+            display: flex; justify-content: space-between;
+            align-items: center; cursor: pointer; transition: all 0.2s;
+        }
+        .section-header:hover { background: linear-gradient(135deg, #334155 0%, #475569 100%); }
+        .collapse-btn { transition: transform 0.3s; }
+        .section-card.collapsed .collapse-btn { transform: rotate(-90deg); }
+
+        .tabs-nav {
+            display: flex; background: #f1f5f9;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .tabs-nav::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            padding: 12px 20px; border: none; background: transparent;
+            cursor: pointer; font-weight: 600; color: #64748b;
+            border-bottom: 3px solid transparent; transition: all 0.3s;
+            white-space: nowrap; display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn:hover { background: #e2e8f0; }
+        .tab-btn.active { color: #667eea; border-bottom-color: #667eea; background: white; }
+        .tab-btn.main-tab { background: #fef3c7; color: #d97706; }
+        .tab-btn.main-tab.active { background: white; border-bottom-color: #d97706; color: #b45309; }
+
+        .tables-container { position: relative; height: 500px; overflow: hidden; }
+        .section-card.collapsed .tables-container,
+        .section-card.collapsed .action-bar { display: none; }
+
+        .table-slide {
+            position: absolute; top: 0; right: 0;
+            width: 100%; height: 100%;
+            transform: translateX(100%); transition: transform 0.3s ease;
+            opacity: 0; visibility: hidden; padding: 20px; overflow-y: auto;
+        }
+        .table-slide.active { transform: translateX(0); opacity: 1; visibility: visible; }
+
+        .bills-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .bills-table th {
+            background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+            padding: 10px 6px; border: 1px solid #cbd5e1;
+            font-weight: 700; color: #1e293b; white-space: nowrap;
+        }
+        .bills-table td { padding: 6px; border: 1px solid #e2e8f0; text-align: center; }
+
+        .input-cell {
+            width: 100%; border: 2px solid transparent;
+            background: transparent; padding: 4px;
+            text-align: center; border-radius: 4px; font-size: 0.85rem;
+        }
+        .input-cell:focus { background: #eef2ff; border-color: #6366f1; outline: none; }
+
+        .calc-cell { background: #f0fdf4; font-weight: 600; color: #059669; }
+        .linked-cell { background: #fef3c7; font-weight: 700; color: #d97706; border: 2px solid #fbbf24; }
+        .tax-cell { color: #ea580c; font-weight: 600; }
+        .total-cell { background: #ede9fe; color: #5b21b6; font-weight: 700; font-size: 0.95rem; }
+
+        .sticky-col {
+            position: sticky; right: 0;
+            background: #f8fafc; z-index: 10;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+        }
+        .print-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #667eea; }
+
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.9); border: 2px solid #e2e8f0;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 20; transition: all 0.2s;
+        }
+        .nav-arrow:hover { background: #667eea; color: white; border-color: #667eea; }
+        .nav-arrow.left { left: 10px; }
+        .nav-arrow.right { right: 10px; }
+
+        .action-bar {
+            padding: 15px 20px; background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .btn-add {
+            padding: 8px 16px; border-radius: 8px; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.2s; border: none; cursor: pointer;
+        }
+        .btn-add-sub { background: #dbeafe; color: #1d4ed8; }
+        .btn-add-sub:hover { background: #bfdbfe; }
+        .btn-add-main { background: #fef3c7; color: #b45309; }
+        .btn-add-main:hover { background: #fde68a; }
+        .btn-print { background: #10b981; color: white; margin-right: auto; }
+        .btn-print:hover { background: #059669; }
+        .btn-delete { color: #ef4444; background: none; border: none; cursor: pointer; padding: 4px 8px; }
+
+        /* Print Modal */
+        .print-modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .print-modal.active { display: flex; }
+        .print-modal-content {
+            background: white; border-radius: 16px;
+            width: 90%; max-width: 600px; max-height: 80vh; overflow: hidden;
+        }
+        .print-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .print-modal-body { padding: 20px; overflow-y: auto; max-height: 50vh; }
+        .print-row-item {
+            display: flex; align-items: center;
+            padding: 10px; border-bottom: 1px solid #e2e8f0; transition: background 0.2s;
+        }
+        .print-row-item:hover { background: #f8fafc; }
+        .print-modal-footer {
+            padding: 20px; background: #f8fafc;
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+
+        /* Print Preview */
+        .print-preview { display: none; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-preview { display: block !important; }
+            body {
+                background: white !important; margin: 0; padding: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+        .print-page {
+            width: 210mm; min-height: 297mm; max-width: 210mm;
+            margin: 0 auto; padding: 20mm 15mm;
+            background: white; page-break-after: always; box-sizing: border-box;
+        }
+        .print-page:last-child { page-break-after: avoid; }
+        .print-header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 4px solid #808080; }
+        .print-title { font-size: 28px; font-weight: 700; color: #5c4a32; margin-bottom: 15px; }
+        .print-apartment {
+            font-size: 22px; font-weight: 600; color: #5c4a32;
+            background: #fefaeb; display: inline-block;
+            padding: 10px 30px; border-radius: 30px; border: 2px solid #f1d88f;
+        }
+        .print-table {
+            width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 20px;
+            border: 2px solid #808080; border-radius: 12px; overflow: hidden;
+        }
+        .print-table tr { border-bottom: 1px solid #c0c0c0; }
+        .print-table tr:last-child { border-bottom: none; }
+        .print-table td { padding: 12px 15px; border-right: 1px solid #c0c0c0; }
+        .print-table td:last-child { border-right: none; }
+        .print-label { width: 50%; font-weight: 700; text-align: right; color: #5c4a32; }
+        .print-value { width: 50%; text-align: center; font-weight: 700; color: #5c4a32; }
+        .print-row-gray .print-label { background: #808080 !important; color: white; }
+        .print-row-gray .print-value { background: #e8e8e8 !important; }
+        .print-row-cream-light .print-label { background: #fefaeb !important; }
+        .print-row-cream-light .print-value { background: #fffdf5 !important; }
+        .print-row-yellow-soft .print-label { background: #f7e7b5 !important; }
+        .print-row-yellow-soft .print-value { background: #fcf6e3 !important; }
+        .print-row-golden .print-label { background: #f1d88f !important; }
+        .print-row-golden .print-value { background: #f9f0d0 !important; }
+        .print-row-cream .print-label { background: #fcf3cf !important; }
+        .print-row-cream .print-value { background: #fefcf0 !important; }
+        .print-row-blue-light .print-label { background: #c0e6f5 !important; color: #2c5f75; }
+        .print-row-blue-light .print-value { background: #e8f6fc !important; color: #2c5f75; }
+        .print-row-turquoise .print-label { background: #bee4dd !important; color: #2c5f5a; }
+        .print-row-turquoise .print-value { background: #e8f5f2 !important; color: #2c5f5a; }
+        .print-row-mint .print-label { background: #a2d9ce !important; color: #2c5f5a; }
+        .print-row-mint .print-value { background: #d8f0eb !important; color: #2c5f5a; }
+        .print-row-total .print-label { background: #808080 !important; color: white; font-size: 17px; padding: 16px 15px; }
+        .print-row-total .print-value { background: #f1d88f !important; font-size: 20px; font-weight: 800; padding: 16px 15px; }
+        .print-footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px dashed #bee4dd; color: #808080; font-size: 12px; }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none;
+            justify-content: center; align-items: center; z-index: 200;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-spinner { background: white; padding: 30px; border-radius: 16px; text-align: center; }
+        .empty-loading { text-align: center; padding: 40px; color: #64748b; }
+
+        /* Config Modal */
+        .config-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .config-badge.connected { background: #dcfce7; color: #16a34a; }
+        .config-badge.disconnected { background: #fee2e2; color: #dc2626; }
+
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Save status indicator */
+        #saveStatus {
+            font-size: 12px; padding: 4px 10px; border-radius: 12px;
+            font-weight: 600; transition: all 0.3s;
+        }
+        #saveStatus.saved { background: #dcfce7; color: #16a34a; }
+        #saveStatus.saving { background: #fef3c7; color: #d97706; }
+        #saveStatus.error { background: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay no-print">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-3"></i>
+        <p class="text-gray-700 font-bold" id="loadingText">جاري التحميل...</p>
+    </div>
+</div>
+
+<!-- Header -->
+<header class="gradient-bg text-white shadow-lg no-print">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center flex-wrap gap-3">
+            <div class="flex items-center gap-4">
+                <i class="fas fa-building text-3xl text-yellow-300"></i>
+                <div>
+                    <h1 class="text-2xl font-bold">نظام إدارة الأقسام والشقق</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span id="dbStatus" class="config-badge disconnected">
+                            <i class="fas fa-circle text-xs"></i> غير متصل
+                        </span>
+                        <span id="saveStatus" class="hidden"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="showConfigModal()" class="hidden">
+                    <i class="fas fa-cog"></i> إعداد Supabase
+                </button>
+                <button onclick="refreshData()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg hover:bg-indigo-800 transition">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-6 no-print">
+
+    <!-- Global Actions -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-6 flex justify-between items-center flex-wrap gap-3">
+        <button onclick="addSection()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2 font-bold text-lg">
+            <i class="fas fa-folder-plus"></i> إضافة قسم جديد
+        </button>
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="saveAllToSupabase()" id="saveBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2 font-bold">
+                <i class="fas fa-save"></i> حفظ الكل
+            </button>
+            <button onclick="showPrintAllModal()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 font-bold">
+                <i class="fas fa-print"></i> طباعة الكل
+            </button>
+            <button onclick="expandAll()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                <i class="fas fa-expand-alt"></i> توسيع الكل
+            </button>
+            <button onclick="collapseAll()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm">
+                <i class="fas fa-compress-alt"></i> طي الكل
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="empty-loading hidden">
+        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
+        <p class="text-lg">جاري تحميل البيانات...</p>
+    </div>
+
+    <!-- Sections Container -->
+    <div id="sectionsContainer" class="space-y-6"></div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="text-center py-12 hidden">
+        <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 text-lg mb-4">لا توجد أقسام</p>
+        <button onclick="addSection()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+            إضافة أول قسم
+        </button>
+    </div>
+</main>
+
+<!-- Print Modal -->
+<div id="printModal" class="print-modal no-print">
+    <div class="print-modal-content">
+        <div class="print-modal-header">
+            <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-print"></i> اختيار الصفوف للطباعة</h3>
+            <button onclick="closePrintModal()" class="text-white hover:text-gray-200"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="print-modal-body" id="printModalBody"></div>
+        <div class="print-modal-footer">
+            <button onclick="selectAllRows()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">اختيار الكل</button>
+            <button onclick="deselectAllRows()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">إلغاء الكل</button>
+            <button onclick="confirmPrint()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold flex items-center gap-2">
+                <i class="fas fa-print"></i> طباعة المحدد
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Print Preview -->
+<div id="printPreview" class="print-preview"></div>
+
+<!-- Print ALL Modal -->
+<div id="printAllModal" class="print-modal no-print">
+    <div class="print-modal-content" style="max-width:750px;">
+        <div class="print-modal-header" style="background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 100%);">
+            <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-print"></i> u0637u0628u0627u0639u0629 u0627u0644u0643u0644 u2014 u0627u062eu062au0631 u0627u0644u0641u062au0631u0627u062a</h3>
+            <button onclick="closePrintAllModal()" class="text-white hover:text-gray-200"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="print-modal-body" id="printAllModalBody" style="max-height:60vh;"></div>
+        <div class="print-modal-footer">
+            <button onclick="selectAllPrintAll()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">u062au062du062fu064au062f u0627u0644u0643u0644</button>
+            <button onclick="deselectAllPrintAll()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">u0625u0644u063au0627u0621 u0627u0644u0643u0644</button>
+            <span class="text-sm text-gray-500 flex items-center" id="printAllCount"></span>
+            <button onclick="confirmPrintAll()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center gap-2">
+                <i class="fas fa-print"></i> u0637u0628u0627u0639u0629 u0627u0644u0645u062du062fu062f
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Config Modal -->
+<div id="configModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div class="flex items-center gap-3 mb-1">
+                <i class="fas fa-database text-2xl"></i>
+                <h3 class="text-xl font-bold">إعداد Supabase</h3>
+            </div>
+            <p class="text-sm opacity-80">أدخل بيانات مشروع Supabase الخاص بك</p>
+        </div>
+        <div class="p-6 space-y-4">
+            <!-- Steps guide -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                <p class="font-bold mb-2"><i class="fas fa-info-circle ml-1"></i> خطوات الإعداد:</p>
+                <ol class="list-decimal list-inside space-y-1 text-xs">
+                    <li>اذهب إلى <a href="https://supabase.com" target="_blank" class="underline font-bold">supabase.com</a> وسجّل حساب مجاني</li>
+                    <li>أنشئ مشروع جديد (New Project)</li>
+                    <li>من <strong>SQL Editor</strong> شغّل ملف <code>schema.sql</code></li>
+                    <li>من <strong>Settings &gt; API</strong> انسخ Project URL و anon key</li>
+                </ol>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Project URL</label>
+                <input type="text" id="cfgUrl" placeholder="https://xxxxxxxxxxxx.supabase.co"
+                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 text-sm" dir="ltr">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Anon Key (public)</label>
+                <input type="password" id="cfgKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 text-sm" dir="ltr">
+                <p class="text-xs text-gray-400 mt-1">هذا المفتاح آمن للاستخدام في الفرونت-إند</p>
+            </div>
+            <div id="configTestResult" class="hidden"></div>
+        </div>
+        <div class="px-6 pb-6 flex gap-3">
+            <button onclick="closeConfigModal()" class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition font-semibold">إلغاء</button>
+            <button onclick="testConnection()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-semibold flex items-center gap-2">
+                <i class="fas fa-plug"></i> اختبار
+            </button>
+            <button onclick="saveConfig()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-bold flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> حفظ وتوصيل
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-4 left-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 z-50 flex items-center gap-2 no-print">
+    <i class="fas fa-check-circle text-green-400"></i>
+    <span id="toastMessage">تمت العملية بنجاح</span>
+</div>
+
+<script>
+// ================================================================
+// أرقام إنجليزية
+// ================================================================
+function toEnglishDigits(v) {
+    if (v === null || v === undefined) return v;
+    return String(v)
+        .replace(/[٠-٩]/g, d => d.charCodeAt(0) - 1632)
+        .replace(/[۰-۹]/g, d => d.charCodeAt(0) - 1776);
+}
+function safeNum(v) { return toEnglishDigits(String(v !== undefined && v !== null ? v : '')); }
+function fixTextNode(n) { if (n && n.nodeType === Node.TEXT_NODE) { const v = n.nodeValue, nv = toEnglishDigits(v); if (nv !== v) n.nodeValue = nv; } }
+function fixInputDigits(el) {
+    if (!el || el.type === 'number') return;
+    if (typeof el.value === 'string') { const nv = toEnglishDigits(el.value); if (nv !== el.value) el.value = nv; }
+    if (el.placeholder) { const np = toEnglishDigits(el.placeholder); if (np !== el.placeholder) el.placeholder = np; }
+}
+function fixDigitsInElement(root) {
+    if (!root) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let n; while ((n = w.nextNode())) fixTextNode(n);
+    root.querySelectorAll && root.querySelectorAll('input, textarea').forEach(fixInputDigits);
+}
+function escapeAttr(s) { return String(s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function setCalcCell(id, val) { const el = document.getElementById(id); if (el) el.textContent = safeNum(val.toFixed(2)); }
+
+// ================================================================
+// Supabase
+// ================================================================
+let db = null;
+let isConnected = false;
+
+// إعداد Supabase من الملف المشترك js/config.js (قاعدة واحدة للوحدتين)
+const SUPABASE_URL = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || '';
+const SUPABASE_ANON_KEY = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || '';
+
+// ================================================================
+// دوال الربط مع نظام إدارة الشقق
+// ================================================================
+
+/**
+ * توليد كود فريد ثابت لكل شقة من section + apartment + type
+ * يستخدم MD5-like hash مبسط لتوليد كود قصير وثابت
+ * مثال: "الشقة 1" + "الفرعية 1" + "sub" → "APT-A1B2C3"
+ */
+function generateApartmentCode(section, apartment, type) {
+    if (!section || !apartment) return '';
+    var str = String(section).trim() + '|' + String(apartment).trim() + '|' + String(type || '').trim();
+    // hash بسيط ثابت
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        var chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+    }
+    // تحويل للـ base36 وأخذ 8 حروف بصيغة كبيرة
+    var hashStr = Math.abs(hash).toString(36).toUpperCase().padStart(6, '0').substring(0, 8);
+    return 'APT-' + hashStr;
+}
+
+/**
+ * استخراج تاريخ نهاية الفترة من النص
+ * أمثلة الفترات المدعومة:
+ *  - "20/2/2026 – 22/3/2026"
+ *  - "20/2/2026 - 22/3/2026"
+ *  - "2026-02-20 to 2026-03-22"
+ *  - "20-2-2026 إلى 22-3-2026"
+ */
+function parseEndDateFromPeriod(period) {
+    if (!period) return null;
+    var str = toEnglishDigits(String(period).trim());
+
+    // فصل النص بأي فاصل: – | - | إلى | to | حتى
+    var parts = str.split(/[–\-]|إلى|to|حتى/i);
+    if (parts.length < 2) return null;
+
+    // آخر جزء = تاريخ النهاية
+    var endStr = parts[parts.length - 1].trim();
+    return parseDate(endStr);
+}
+
+/**
+ * تحليل تاريخ بصيغ متعددة:
+ *  - DD/MM/YYYY أو D/M/YYYY
+ *  - DD-MM-YYYY
+ *  - YYYY-MM-DD
+ */
+function parseDate(str) {
+    if (!str) return null;
+    str = String(str).trim();
+
+    // YYYY-MM-DD
+    var iso = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+    if (iso) {
+        return new Date(parseInt(iso[1]), parseInt(iso[2]) - 1, parseInt(iso[3]));
+    }
+
+    // DD/MM/YYYY أو DD-MM-YYYY
+    var dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+        return new Date(parseInt(dmy[3]), parseInt(dmy[2]) - 1, parseInt(dmy[1]));
+    }
+
+    // محاولة أخيرة - parse مباشر
+    var d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * استخراج الشهر (YYYY-MM) من نص الفترة
+ * يأخذ تاريخ النهاية ويرجع الشهر
+ */
+function getBillMonthFromPeriod(period) {
+    var endDate = parseEndDateFromPeriod(period);
+    if (!endDate) return '';
+    var y = endDate.getFullYear();
+    var m = String(endDate.getMonth() + 1).padStart(2, '0');
+    return y + '-' + m;
+}
+
+/**
+ * نسخ نص للحافظة وإظهار toast
+ */
+function copyToClipboard(text, successMsg) {
+    if (!text) {
+        showToast('لا يوجد كود لنسخه', 'error');
+        return;
+    }
+
+    // محاولة الاستخدام الحديث
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast(successMsg || ('تم نسخ: ' + text));
+        }).catch(function() {
+            fallbackCopy(text, successMsg);
+        });
+    } else {
+        fallbackCopy(text, successMsg);
+    }
+}
+
+function fallbackCopy(text, successMsg) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showToast(successMsg || ('تم نسخ: ' + text));
+    } catch (e) {
+        showToast('فشل النسخ - انسخ يدوياً: ' + text, 'error');
+    }
+    document.body.removeChild(ta);
+}
+
+/**
+ * عرض الكود الخاص بشقة معينة في modal أو تنبيه
+ */
+function showApartmentCode(sId, tabId) {
+    var secName = (document.getElementById('section-name-' + sId) || {}).value || '';
+    var aptName = (document.getElementById('name-' + sId + '-' + tabId) || {}).value || '';
+    var tab = (sectionData[sId] && sectionData[sId].tabs || []).find(function(t) { return t.id === tabId; });
+    if (!tab) {
+        showToast('لم يتم العثور على بيانات الشقة', 'error');
+        return;
+    }
+    var type = tab.type === 'main' ? 'رئيسية' : 'فرعية';
+    var code = generateApartmentCode(secName, aptName, type);
+
+    var msg = 'كود الشقة "' + aptName + '" (' + type + '):\n\n' + code +
+              '\n\nاستخدم هذا الكود في نظام إدارة الشقق لربط الفواتير تلقائياً.';
+
+    copyToClipboard(code, '✓ تم نسخ الكود: ' + code);
+}
+
+function loadConfig() {
+    return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
+}
+
+function initSupabase(url, key) {
+    try {
+        db = supabase.createClient(url, key);
+        isConnected = true;
+        setDbStatus(true);
+        return true;
+    } catch(e) {
+        isConnected = false;
+        setDbStatus(false);
+        return false;
+    }
+}
+
+function setDbStatus(connected) {
+    const el = document.getElementById('dbStatus');
+    if (!el) return;
+    el.className = 'config-badge ' + (connected ? 'connected' : 'disconnected');
+    el.innerHTML = connected
+        ? '<i class="fas fa-circle text-xs"></i> متصل بـ Supabase'
+        : '<i class="fas fa-circle text-xs"></i> غير متصل';
+}
+
+function setSaveStatus(state, msg) {
+    const el = document.getElementById('saveStatus');
+    if (!el) return;
+    el.className = state;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    if (state === 'saved') setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+// Config Modal
+function showConfigModal() {
+    const cfg = loadConfig();
+    document.getElementById('cfgUrl').value = cfg.url;
+    document.getElementById('cfgKey').value = cfg.key;
+    document.getElementById('configTestResult').classList.add('hidden');
+    const m = document.getElementById('configModal');
+    m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeConfigModal() {
+    const m = document.getElementById('configModal');
+    m.classList.add('hidden'); m.classList.remove('flex');
+}
+async function testConnection() {
+    const url = document.getElementById('cfgUrl').value.trim();
+    const key = document.getElementById('cfgKey').value.trim();
+    const res = document.getElementById('configTestResult');
+    if (!url || !key) { showResult(res, false, 'الرجاء إدخال URL و Key'); return; }
+    try {
+        const testDb = supabase.createClient(url, key);
+        const { error } = await testDb.from('apartment_records').select('id').limit(1);
+        if (error && error.code !== 'PGRST116') {
+            showResult(res, false, 'خطأ: ' + error.message + ' — تأكد من تشغيل schema.sql');
+        } else {
+            showResult(res, true, 'الاتصال ناجح! قاعدة البيانات جاهزة.');
+        }
+    } catch(e) { showResult(res, false, 'فشل الاتصال: ' + e.message); }
+}
+function showResult(el, ok, msg) {
+    el.className = ok ? 'mt-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-semibold' : 'mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm';
+    el.innerHTML = (ok ? '<i class="fas fa-check-circle ml-1"></i>' : '<i class="fas fa-exclamation-circle ml-1"></i>') + msg;
+    el.classList.remove('hidden');
+}
+async function saveConfig() {
+    const url = document.getElementById('cfgUrl').value.trim();
+    const key = document.getElementById('cfgKey').value.trim();
+    if (!url || !key) { showToast('الرجاء إدخال URL و Key', 'error'); return; }
+    try {
+        localStorage.setItem('sb_url', url);
+        localStorage.setItem('sb_key', key);
+    } catch(e) {}
+    if (initSupabase(url, key)) {
+        closeConfigModal();
+        showToast('تم الاتصال بـ Supabase بنجاح!');
+        loadDataFromSupabase();
+    } else {
+        showToast('فشل الاتصال — تحقق من البيانات', 'error');
+    }
+}
+
+// ================================================================
+// App State
+// ================================================================
+let sectionCounter = 0;
+let sectionData = {};
+let currentPrintTarget = null;
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', function () {
+    fixDigitsInElement(document.body);
+    // مراقبة التغييرات
+    const obs = new MutationObserver(muts => {
+        for (const m of muts) {
+            if (m.type === 'characterData') { fixTextNode(m.target); }
+            else if (m.type === 'childList') {
+                m.addedNodes.forEach(n => {
+                    if (n.nodeType === Node.TEXT_NODE) fixTextNode(n);
+                    else if (n.nodeType === Node.ELEMENT_NODE) fixDigitsInElement(n);
+                });
+            }
+        }
+    });
+    obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+
+    document.addEventListener('input', e => {
+        if (e.target && e.target.matches('input[type="text"], textarea')) fixInputDigits(e.target);
+    });
+
+    // اتصال تلقائي بـ Supabase
+    initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
+    loadDataFromSupabase();
+});
+
+// ================================================================
+// LOAD DATA FROM SUPABASE
+// ================================================================
+async function loadDataFromSupabase() {
+    if (!db) return;
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('sectionsContainer').innerHTML = '';
+    document.getElementById('emptyState').classList.add('hidden');
+
+    try {
+        const { data, error } = await db
+            .from('apartment_records')
+            .select('*')
+            .order('section').order('apartment').order('row_number');
+
+        document.getElementById('loadingState').classList.add('hidden');
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            buildAppFromData(data);
+            showToast('تم تحميل ' + data.length + ' سجل');
+        } else {
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+    } catch(e) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('emptyState').classList.remove('hidden');
+        showToast('خطأ في التحميل: ' + e.message, 'error');
+    }
+}
+
+// ================================================================
+// BUILD APP FROM DATA
+// ================================================================
+function buildAppFromData(data) {
+    const grouped = {};
+    data.forEach(row => {
+        const sec = row.section || 'قسم افتراضي';
+        const apt = row.apartment || 'شقة';
+        const type = row.type === 'رئيسية' ? 'main' : 'sub';
+        if (!grouped[sec]) grouped[sec] = {};
+        const k = apt + '|' + type;
+        if (!grouped[sec][k]) grouped[sec][k] = { name: apt, type, rows: [] };
+        grouped[sec][k].rows.push(row);
+    });
+
+    Object.keys(grouped).forEach(secName => {
+        sectionCounter++;
+        const sId = sectionCounter;
+        sectionData[sId] = { tabs: [], activeTab: null, rowCounters: {}, collapsed: false };
+
+        const div = document.createElement('div');
+        div.className = 'section-card fade-in';
+        div.id = 'section-' + sId;
+        div.innerHTML = buildSectionHTML(sId, secName);
+        document.getElementById('sectionsContainer').appendChild(div);
+
+        let firstTab = true;
+        Object.keys(grouped[secName]).forEach(k => {
+            const apt = grouped[secName][k];
+            const tabId = apt.type + '-' + Date.now() + '-' + Math.random().toString(36).substr(2,9);
+            sectionData[sId].tabs.push({ id: tabId, type: apt.type, name: apt.name });
+            sectionData[sId].rowCounters[tabId] = 0;
+
+            const tabNum = sectionData[sId].tabs.filter(t => t.type === apt.type).length;
+            const tabBtn = document.createElement('button');
+            tabBtn.className = 'tab-btn' + (apt.type === 'main' ? ' main-tab' : '');
+            tabBtn.id = 'tab-btn-' + sId + '-' + tabId;
+            tabBtn.innerHTML = apt.type === 'main'
+                ? '<i class="fas fa-building"></i> الرئيسية ' + tabNum
+                : '<i class="fas fa-home"></i> الفرعية ' + tabNum;
+            tabBtn.onclick = () => switchTab(sId, tabId);
+            document.getElementById('tabs-' + sId).appendChild(tabBtn);
+
+            const slide = document.createElement('div');
+            slide.className = 'table-slide';
+            slide.id = 'slide-' + sId + '-' + tabId;
+            slide.dataset.type = apt.type;
+            slide.dataset.tabId = tabId;
+            slide.innerHTML = buildSlideHTML(sId, tabId, apt.type, apt.name);
+            document.getElementById('slides-' + sId).appendChild(slide);
+
+            apt.rows.forEach((r, i) => addLoadedRow(sId, tabId, apt.type, r, i + 1));
+
+            if (firstTab) { switchTab(sId, tabId); firstTab = false; }
+        });
+    });
+
+    setTimeout(() => {
+        Object.keys(sectionData).forEach(sId => updateSubSums(sId));
+        fixDigitsInElement(document.getElementById('sectionsContainer'));
+    }, 150);
+}
+
+// ================================================================
+// HTML BUILDERS
+// ================================================================
+function buildSectionHTML(sId, name) {
+    return '<div class="section-header" onclick="toggleSection(' + sId + ')">' +
+        '<div class="flex items-center gap-3">' +
+        '<i class="fas fa-folder text-yellow-400 text-xl"></i>' +
+        '<input type="text" id="section-name-' + sId + '" value="' + escapeAttr(name) + '" ' +
+        'class="bg-white/20 text-white placeholder-white/70 border-b-2 border-white/50 px-2 py-1 text-lg font-bold w-64 focus:outline-none focus:border-white" ' +
+        'onclick="event.stopPropagation()">' +
+        '</div>' +
+        '<div class="flex items-center gap-3">' +
+        '<button onclick="deleteSection(' + sId + ');event.stopPropagation();" class="text-white/80 hover:text-red-300 transition"><i class="fas fa-trash text-lg"></i></button>' +
+        '<i class="fas fa-chevron-down collapse-btn text-xl"></i>' +
+        '</div></div>' +
+        '<div class="action-bar">' +
+        '<button onclick="addSubApartment(' + sId + ')" class="btn-add btn-add-sub"><i class="fas fa-home"></i> إضافة شقة فرعية</button>' +
+        '<button onclick="addMainApartment(' + sId + ')" class="btn-add btn-add-main"><i class="fas fa-building"></i> إضافة شقة رئيسية</button>' +
+        '</div>' +
+        '<div class="tabs-nav" id="tabs-' + sId + '"></div>' +
+        '<div class="tables-container" id="container-' + sId + '">' +
+        '<div class="nav-arrow left" onclick="navigateTab(' + sId + ',\'prev\')"><i class="fas fa-chevron-left"></i></div>' +
+        '<div class="nav-arrow right" onclick="navigateTab(' + sId + ',\'next\')"><i class="fas fa-chevron-right"></i></div>' +
+        '<div id="slides-' + sId + '"></div>' +
+        '</div>';
+}
+
+function buildSlideHTML(sId, tabId, type, aptName) {
+    const isMain = type === 'main';
+    const c = isMain ? 'yellow' : 'blue';
+    const fn = isMain ? 'addRowToMain' : 'addRowToSub';
+    const hdrs = isMain
+        ? '<th>عداد الشركة (حالي)</th><th style="background:#fef3c7;color:#d97706;border:2px solid #fbbf24;">مجموع الفرعية</th><th>كمية الاستهلاك</th>'
+        : '<th>القراءة الحالية</th><th>القراءة السابقة</th><th>الاستهلاك</th>';
+    return '<div class="flex justify-between items-center mb-4">' +
+        '<h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">' +
+        '<i class="fas ' + (isMain ? 'fa-building text-yellow-600' : 'fa-home text-blue-600') + '"></i>' +
+        '<input type="text" id="name-' + sId + '-' + tabId + '" value="' + escapeAttr(aptName) + '" ' +
+        'class="border-b-2 border-gray-300 px-2 py-1 focus:outline-none focus:border-' + c + '-500 font-bold">' +
+        '</h3><div class="flex gap-2 flex-wrap">' +
+        '<button onclick="showApartmentCode(' + sId + ',\'' + tabId + '\')" class="btn-add" style="background:#e0e7ff;color:#3730a3;" title="نسخ كود الشقة للربط مع نظام إدارة الشقق"><i class="fas fa-copy"></i> نسخ الكود</button>' +
+        '<button onclick="showPrintModal(' + sId + ',\'' + tabId + '\',\'' + type + '\')" class="btn-print btn-add"><i class="fas fa-print"></i> طباعة</button>' +
+        '<button onclick="deleteTab(' + sId + ',\'' + tabId + '\')" class="text-red-500 hover:text-red-700 px-3 py-2"><i class="fas fa-trash"></i></button>' +
+        '</div></div>' +
+        '<div class="overflow-x-auto">' +
+        '<table class="bills-table" id="table-' + sId + '-' + tabId + '">' +
+        '<thead><tr>' +
+        '<th class="sticky-col" style="width:40px;"><i class="fas fa-print text-xs"></i></th>' +
+        '<th class="sticky-col" style="width:40px;">#</th>' +
+        '<th>الفترة</th>' + hdrs +
+        '<th>معامل الضرب</th><th>قيمة الاستهلاك</th><th>رسوم العداد</th>' +
+        '<th>المجموع قبل الضريبة</th><th>الضريبة 15%</th><th>الماء والصرف</th>' +
+        '<th>المجموع الكلي</th><th class="sticky-col">حذف</th>' +
+        '</tr></thead><tbody id="tbody-' + sId + '-' + tabId + '"></tbody></table></div>' +
+        '<button onclick="' + fn + '(' + sId + ',\'' + tabId + '\')" ' +
+        'class="mt-4 w-full py-3 bg-' + c + '-100 text-' + c + '-700 rounded-lg hover:bg-' + c + '-200 transition font-bold flex items-center justify-center gap-2">' +
+        '<i class="fas fa-plus"></i> إضافة فترة جديدة</button>';
+}
+
+// ================================================================
+// ADD LOADED ROW (from DB)
+// ================================================================
+function addLoadedRow(sId, tabId, type, data, rowNum) {
+    const tbody = document.getElementById('tbody-' + sId + '-' + tabId);
+    sectionData[sId].rowCounters[tabId] = rowNum;
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + sId + '-' + tabId + '-' + rowNum;
+    tr.dataset.period = data.period || '';
+    tr.dataset.rowNum = rowNum;
+
+    if (type === 'main') {
+        tr.innerHTML = mainRowHTML(sId, tabId, rowNum, {
+            period: data.period, current: data.company_current,
+            prev: data.company_previous, mult: data.multiplier,
+            fees: data.fees, water: data.water,
+            consumption: data.consumption, value: data.value,
+            beforeTax: data.before_tax, tax: data.tax, total: data.total
+        });
+    } else {
+        tr.innerHTML = subRowHTML(sId, tabId, rowNum, {
+            period: data.period, current: data.company_current,
+            prev: data.company_previous, mult: data.multiplier,
+            fees: data.fees, water: data.water,
+            consumption: data.consumption, value: data.value,
+            beforeTax: data.before_tax, tax: data.tax, total: data.total
+        });
+    }
+    tbody.appendChild(tr);
+}
+
+function mainRowHTML(sId, tabId, rowNum, d) {
+    return chk(sId,tabId,rowNum) + num(rowNum) +
+        '<td><input type="text" id="main-period-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" value="'+escapeAttr(d.period||'')+'" onchange="updateMainPeriod('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td><input type="number" id="main-company-current-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.current||'')+'" onchange="calculateMain('+sId+',\''+tabId+'\','+rowNum+')">' +
+        '<input type="hidden" id="main-company-prev-'+sId+'-'+tabId+'-'+rowNum+'" value="'+safeNum(d.prev||'')+'"></td>' +
+        '<td id="main-sub-sum-'+sId+'-'+tabId+'-'+rowNum+'" class="linked-cell">0.00</td>' +
+        '<td id="main-consumption-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.consumption||'0.00')+'</td>' +
+        '<td><input type="number" id="main-mult-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.mult||'0.18')+'" onchange="calculateMain('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="main-value-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.value||'0.00')+'</td>' +
+        '<td><input type="number" id="main-fees-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.fees||'0')+'" onchange="calculateMain('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="main-before-tax-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.beforeTax||'0.00')+'</td>' +
+        '<td id="main-tax-'+sId+'-'+tabId+'-'+rowNum+'" class="tax-cell">'+safeNum(d.tax||'0.00')+'</td>' +
+        '<td><input type="number" id="main-water-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.water||'0')+'" onchange="calculateMain('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="main-total-'+sId+'-'+tabId+'-'+rowNum+'" class="total-cell">'+safeNum(d.total||'0.00')+'</td>' +
+        del(sId,tabId,rowNum);
+}
+
+function subRowHTML(sId, tabId, rowNum, d) {
+    return chk(sId,tabId,rowNum) + num(rowNum) +
+        '<td><input type="text" id="sub-period-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" value="'+escapeAttr(d.period||'')+'" onchange="updateSubPeriod('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td><input type="number" id="sub-current-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.current||'')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td><input type="number" id="sub-prev-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.prev||'')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="sub-consumption-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.consumption||'0.00')+'</td>' +
+        '<td><input type="number" id="sub-mult-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.mult||'0.18')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="sub-value-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.value||'0.00')+'</td>' +
+        '<td><input type="number" id="sub-fees-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.fees||'0')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="sub-before-tax-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.beforeTax||'0.00')+'</td>' +
+        '<td id="sub-tax-'+sId+'-'+tabId+'-'+rowNum+'" class="tax-cell">'+safeNum(d.tax||'0.00')+'</td>' +
+        '<td><input type="number" id="sub-water-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.water||'0')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
+        '<td id="sub-total-'+sId+'-'+tabId+'-'+rowNum+'" class="total-cell">'+safeNum(d.total||'0.00')+'</td>' +
+        del(sId,tabId,rowNum);
+}
+
+function chk(s,t,r) { return '<td class="sticky-col"><input type="checkbox" class="print-checkbox" id="print-check-'+s+'-'+t+'-'+r+'" checked></td>'; }
+function num(r) { return '<td class="sticky-col font-bold text-gray-500">'+r+'</td>'; }
+function del(s,t,r) { return '<td class="sticky-col"><button onclick="deleteRow('+s+',\''+t+'\','+r+')" class="btn-delete"><i class="fas fa-trash"></i></button></td>'; }
+
+// ================================================================
+// SECTION / TAB / ROW MANAGEMENT
+// ================================================================
+function toggleSection(sId) { document.getElementById('section-'+sId).classList.toggle('collapsed'); }
+function expandAll() { document.querySelectorAll('.section-card').forEach(s=>s.classList.remove('collapsed')); }
+function collapseAll() { document.querySelectorAll('.section-card').forEach(s=>s.classList.add('collapsed')); }
+
+function addSection() {
+    sectionCounter++;
+    const sId = sectionCounter;
+    sectionData[sId] = { tabs: [], activeTab: null, rowCounters: {}, collapsed: false };
+    document.getElementById('emptyState').classList.add('hidden');
+    const div = document.createElement('div');
+    div.className = 'section-card fade-in'; div.id = 'section-'+sId;
+    div.innerHTML = buildSectionHTML(sId, '');
+    document.getElementById('sectionsContainer').appendChild(div);
+    addMainApartment(sId);
+}
+
+function addMainApartment(sId) {
+    const tabId = 'main-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+    const n = sectionData[sId].tabs.filter(t=>t.type==='main').length+1;
+    sectionData[sId].tabs.push({ id:tabId, type:'main', name:'الشقة الرئيسية '+n });
+    sectionData[sId].rowCounters[tabId] = 0;
+    const btn = document.createElement('button');
+    btn.className='tab-btn main-tab'; btn.id='tab-btn-'+sId+'-'+tabId;
+    btn.innerHTML='<i class="fas fa-building"></i> الرئيسية '+n;
+    btn.onclick=()=>switchTab(sId,tabId);
+    document.getElementById('tabs-'+sId).appendChild(btn);
+    const slide = document.createElement('div');
+    slide.className='table-slide'; slide.id='slide-'+sId+'-'+tabId;
+    slide.dataset.type='main'; slide.dataset.tabId=tabId;
+    slide.innerHTML=buildSlideHTML(sId,tabId,'main','الشقة الرئيسية '+n);
+    document.getElementById('slides-'+sId).appendChild(slide);
+    addRowToMain(sId,tabId); switchTab(sId,tabId);
+}
+
+function addSubApartment(sId) {
+    const tabId = 'sub-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+    const n = sectionData[sId].tabs.filter(t=>t.type==='sub').length+1;
+    sectionData[sId].tabs.push({ id:tabId, type:'sub', name:'الشقة الفرعية '+n });
+    sectionData[sId].rowCounters[tabId] = 0;
+    const btn = document.createElement('button');
+    btn.className='tab-btn'; btn.id='tab-btn-'+sId+'-'+tabId;
+    btn.innerHTML='<i class="fas fa-home"></i> الفرعية '+n;
+    btn.onclick=()=>switchTab(sId,tabId);
+    document.getElementById('tabs-'+sId).appendChild(btn);
+    const slide = document.createElement('div');
+    slide.className='table-slide'; slide.id='slide-'+sId+'-'+tabId;
+    slide.dataset.type='sub'; slide.dataset.tabId=tabId;
+    slide.innerHTML=buildSlideHTML(sId,tabId,'sub','الشقة الفرعية '+n);
+    document.getElementById('slides-'+sId).appendChild(slide);
+    addRowToSub(sId,tabId); switchTab(sId,tabId);
+}
+
+function addRowToMain(sId, tabId) {
+    const tbody = document.getElementById('tbody-'+sId+'-'+tabId);
+    const nr = (sectionData[sId].rowCounters[tabId]||0)+1;
+    sectionData[sId].rowCounters[tabId]=nr;
+    const prev = nr>1 ? document.getElementById('main-company-current-'+sId+'-'+tabId+'-'+(nr-1))?.value||'' : '';
+    const tr = document.createElement('tr');
+    tr.id='row-'+sId+'-'+tabId+'-'+nr; tr.dataset.period=''; tr.dataset.rowNum=nr;
+    tr.innerHTML = mainRowHTML(sId,tabId,nr,{period:'',current:'',prev,mult:'0.18',fees:'0',water:'0',consumption:'0.00',value:'0.00',beforeTax:'0.00',tax:'0.00',total:'0.00'});
+    tbody.appendChild(tr); calculateMain(sId,tabId,nr);
+}
+
+function addRowToSub(sId, tabId) {
+    const tbody = document.getElementById('tbody-'+sId+'-'+tabId);
+    const nr = (sectionData[sId].rowCounters[tabId]||0)+1;
+    sectionData[sId].rowCounters[tabId]=nr;
+    const prev = nr>1 ? document.getElementById('sub-current-'+sId+'-'+tabId+'-'+(nr-1))?.value||'' : '';
+    const tr = document.createElement('tr');
+    tr.id='row-'+sId+'-'+tabId+'-'+nr; tr.dataset.period=''; tr.dataset.rowNum=nr;
+    tr.innerHTML = subRowHTML(sId,tabId,nr,{period:'',current:'',prev,mult:'0.18',fees:'0',water:'0',consumption:'0.00',value:'0.00',beforeTax:'0.00',tax:'0.00',total:'0.00'});
+    tbody.appendChild(tr); calculateSub(sId,tabId,nr);
+}
+
+// ================================================================
+// CALCULATIONS
+// ================================================================
+function g(id) { const e=document.getElementById(id); return e ? parseFloat(toEnglishDigits(e.value||e.textContent||'0'))||0 : 0; }
+
+function calculateMain(sId, tabId, rowNum) {
+    const cur = g('main-company-current-'+sId+'-'+tabId+'-'+rowNum);
+    const prev = g('main-company-prev-'+sId+'-'+tabId+'-'+rowNum);
+    const subSum = parseFloat(toEnglishDigits(document.getElementById('main-sub-sum-'+sId+'-'+tabId+'-'+rowNum)?.textContent||'0'))||0;
+    const mult = g('main-mult-'+sId+'-'+tabId+'-'+rowNum);
+    const fees = g('main-fees-'+sId+'-'+tabId+'-'+rowNum);
+    const water = g('main-water-'+sId+'-'+tabId+'-'+rowNum);
+    const consumption = (cur-prev)-subSum;
+    const value = consumption*mult;
+    const beforeTax = value+fees;
+    const tax = beforeTax*0.15;
+    const total = beforeTax+tax+water;
+    setCalcCell('main-consumption-'+sId+'-'+tabId+'-'+rowNum, consumption);
+    setCalcCell('main-value-'+sId+'-'+tabId+'-'+rowNum, value);
+    setCalcCell('main-before-tax-'+sId+'-'+tabId+'-'+rowNum, beforeTax);
+    setCalcCell('main-tax-'+sId+'-'+tabId+'-'+rowNum, tax);
+    setCalcCell('main-total-'+sId+'-'+tabId+'-'+rowNum, total);
+}
+
+function calculateSub(sId, tabId, rowNum) {
+    const cur = g('sub-current-'+sId+'-'+tabId+'-'+rowNum);
+    const prev = g('sub-prev-'+sId+'-'+tabId+'-'+rowNum);
+    const mult = g('sub-mult-'+sId+'-'+tabId+'-'+rowNum);
+    const fees = g('sub-fees-'+sId+'-'+tabId+'-'+rowNum);
+    const water = g('sub-water-'+sId+'-'+tabId+'-'+rowNum);
+    const consumption = cur-prev;
+    const value = consumption*mult;
+    const beforeTax = value+fees;
+    const tax = beforeTax*0.15;
+    const total = beforeTax+tax+water;
+    setCalcCell('sub-consumption-'+sId+'-'+tabId+'-'+rowNum, consumption);
+    setCalcCell('sub-value-'+sId+'-'+tabId+'-'+rowNum, value);
+    setCalcCell('sub-before-tax-'+sId+'-'+tabId+'-'+rowNum, beforeTax);
+    setCalcCell('sub-tax-'+sId+'-'+tabId+'-'+rowNum, tax);
+    setCalcCell('sub-total-'+sId+'-'+tabId+'-'+rowNum, total);
+    updateSubSums(sId);
+}
+
+function updateMainPeriod(sId,tabId,rowNum) {
+    document.getElementById('row-'+sId+'-'+tabId+'-'+rowNum).dataset.period = document.getElementById('main-period-'+sId+'-'+tabId+'-'+rowNum)?.value||'';
+    updateSubSums(sId);
+}
+function updateSubPeriod(sId,tabId,rowNum) {
+    document.getElementById('row-'+sId+'-'+tabId+'-'+rowNum).dataset.period = document.getElementById('sub-period-'+sId+'-'+tabId+'-'+rowNum)?.value||'';
+    updateSubSums(sId);
+}
+
+// مطابقة الفترات: نطابق بالشهر المُشتق (bill_month) لتفادي هشاشة فروق النص/المسافات/الشرطات.
+// لو تعذّر اشتقاق الشهر لأحدهما (فترة غير قياسية) نرجع للمطابقة النصّية الحرفية كما كانت.
+function periodsMatch(a, b) {
+    if (a == null || b == null) return false;
+    const ta = String(a).trim(), tb = String(b).trim();
+    if (ta === tb) return true;
+    const ma = getBillMonthFromPeriod(ta), mb = getBillMonthFromPeriod(tb);
+    if (ma && mb) return ma === mb;
+    return false;
+}
+
+function updateSubSums(sId) {
+    const mainTabs = sectionData[sId].tabs.filter(t=>t.type==='main');
+    const subTabs = sectionData[sId].tabs.filter(t=>t.type==='sub');
+    mainTabs.forEach(mt => {
+        document.querySelectorAll('#tbody-'+sId+'-'+mt.id+' tr').forEach(mr => {
+            const period = mr.dataset.period; if (!period) return;
+            let total = 0;
+            subTabs.forEach(st => {
+                document.querySelectorAll('#tbody-'+sId+'-'+st.id+' tr').forEach(sr => {
+                    if (periodsMatch(sr.dataset.period, period)) {
+                        const c = sr.querySelector('td[id^="sub-consumption-"]');
+                        if (c) total += parseFloat(toEnglishDigits(c.textContent))||0;
+                    }
+                });
+            });
+            const rn = mr.dataset.rowNum;
+            const cell = document.getElementById('main-sub-sum-'+sId+'-'+mt.id+'-'+rn);
+            if (cell) { cell.textContent = safeNum(total.toFixed(2)); calculateMain(sId,mt.id,rn); }
+        });
+    });
+}
+
+// ================================================================
+// TABS
+// ================================================================
+function switchTab(sId,tabId) {
+    document.querySelectorAll('#tabs-'+sId+' .tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-btn-'+sId+'-'+tabId)?.classList.add('active');
+    document.querySelectorAll('#slides-'+sId+' .table-slide').forEach(s=>s.classList.remove('active'));
+    document.getElementById('slide-'+sId+'-'+tabId)?.classList.add('active');
+    sectionData[sId].activeTab=tabId;
+}
+function navigateTab(sId,dir) {
+    const tabs=sectionData[sId].tabs;
+    const i=tabs.findIndex(t=>t.id===sectionData[sId].activeTab);
+    const ni=dir==='next'?(i+1)%tabs.length:(i-1+tabs.length)%tabs.length;
+    switchTab(sId,tabs[ni].id);
+}
+
+// ================================================================
+// DELETE
+// ================================================================
+function deleteRow(sId,tabId,rowNum) {
+    if (!confirm('حذف هذا الصف؟')) return;
+    document.getElementById('row-'+sId+'-'+tabId+'-'+rowNum).remove();
+    updateSubSums(sId);
+}
+function deleteTab(sId,tabId) {
+    if (!confirm('حذف هذا الجدول؟')) return;
+    document.getElementById('tab-btn-'+sId+'-'+tabId)?.remove();
+    document.getElementById('slide-'+sId+'-'+tabId)?.remove();
+    sectionData[sId].tabs=sectionData[sId].tabs.filter(t=>t.id!==tabId);
+    delete sectionData[sId].rowCounters[tabId];
+    if (sectionData[sId].tabs.length>0) switchTab(sId,sectionData[sId].tabs[0].id);
+    updateSubSums(sId);
+}
+function deleteSection(sId) {
+    if (!confirm('حذف القسم وكل جداوله؟')) return;
+    document.getElementById('section-'+sId).remove();
+    delete sectionData[sId];
+    if (Object.keys(sectionData).length===0) document.getElementById('emptyState').classList.remove('hidden');
+}
+
+// ================================================================
+// SAVE ALL TO SUPABASE
+// ================================================================
+async function saveAllToSupabase() {
+    if (!db) { showToast('الرجاء إعداد Supabase أولاً', 'error'); showConfigModal(); return; }
+
+    setSaveStatus('saving', '⏳ جاري الحفظ...');
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.getElementById('loadingText').textContent = 'جاري الحفظ...';
+
+    const rows = [];
+    Object.keys(sectionData).forEach(sId => {
+        const secName = document.getElementById('section-name-'+sId)?.value || 'قسم '+sId;
+        sectionData[sId].tabs.forEach(tab => {
+            const aptName = document.getElementById('name-'+sId+'-'+tab.id)?.value || tab.name;
+            const isMainApt = tab.type==='main';
+            const typeText = isMainApt ? 'رئيسية' : 'فرعية';
+            // الكود الثابت للشقة - مستقل عن البيانات الأخرى
+            const aptCode = generateApartmentCode(secName, aptName, typeText);
+
+            document.querySelectorAll('#tbody-'+sId+'-'+tab.id+' tr').forEach(row => {
+                const rn = row.dataset.rowNum;
+                const isMain = tab.type==='main';
+                const p = id => { const e=document.getElementById(id); return e ? toEnglishDigits(e.value||e.textContent||'0') : '0'; };
+                const periodVal = document.getElementById((isMain?'main':'sub')+'-period-'+sId+'-'+tab.id+'-'+rn)?.value||'';
+                // استخراج الشهر تلقائياً من نهاية الفترة
+                const billMonth = getBillMonthFromPeriod(periodVal);
+
+                rows.push({
+                    section: secName,
+                    apartment: aptName,
+                    type: typeText,
+                    row_number: parseInt(rn),
+                    period: periodVal,
+                    apartment_code: aptCode,
+                    bill_month: billMonth,
+                    company_current: parseFloat(p((isMain?'main-company-current':'sub-current')+'-'+sId+'-'+tab.id+'-'+rn))||0,
+                    company_previous: parseFloat(p(isMain?'main-company-prev-'+sId+'-'+tab.id+'-'+rn:'sub-prev-'+sId+'-'+tab.id+'-'+rn))||0,
+                    sub_sum: isMain ? parseFloat(p('main-sub-sum-'+sId+'-'+tab.id+'-'+rn))||0 : 0,
+                    consumption: parseFloat(p((isMain?'main':'sub')+'-consumption-'+sId+'-'+tab.id+'-'+rn))||0,
+                    multiplier: parseFloat(p((isMain?'main':'sub')+'-mult-'+sId+'-'+tab.id+'-'+rn))||0.18,
+                    value: parseFloat(p((isMain?'main':'sub')+'-value-'+sId+'-'+tab.id+'-'+rn))||0,
+                    fees: parseFloat(p((isMain?'main':'sub')+'-fees-'+sId+'-'+tab.id+'-'+rn))||0,
+                    before_tax: parseFloat(p((isMain?'main':'sub')+'-before-tax-'+sId+'-'+tab.id+'-'+rn))||0,
+                    tax: parseFloat(p((isMain?'main':'sub')+'-tax-'+sId+'-'+tab.id+'-'+rn))||0,
+                    water: parseFloat(p((isMain?'main':'sub')+'-water-'+sId+'-'+tab.id+'-'+rn))||0,
+                    total: parseFloat(p((isMain?'main':'sub')+'-total-'+sId+'-'+tab.id+'-'+rn))||0,
+                });
+            });
+        });
+    });
+
+    try {
+        // حفظ آمن غير تدميري:
+        // 1) upsert لكل الصفوف الحالية على المفتاح الفريد (apartment_code, period)
+        //    => يُحدِّث الموجود ويضيف الجديد، دون حذف أي شيء أولاً.
+        // 2) ثم نحذف فقط الصفوف التي أزالها المستخدم فعلاً (موجودة بالقاعدة وغير موجودة الآن)،
+        //    وبشرط أن تكون هناك بيانات حالية (حارس يمنع المسح الكلي عند أي خلل).
+        if (rows.length === 0) {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            setSaveStatus('error', '✗ لا توجد بيانات للحفظ');
+            showToast('لا توجد بيانات للحفظ — أُلغي الحفظ حمايةً للبيانات', 'error');
+            return;
+        }
+
+        const { error: upErr } = await db
+            .from('apartment_records')
+            .upsert(rows, { onConflict: 'apartment_code,period' });
+        if (upErr) throw upErr;
+
+        // مزامنة الحذف: احذف ما لم يَعُد موجوداً ضمن نطاق الأكواد المعروضة فقط
+        const currentKeys = new Set(rows.map(r => r.apartment_code + '||' + r.period));
+        const codes = [...new Set(rows.map(r => r.apartment_code).filter(Boolean))];
+        if (codes.length > 0) {
+            const { data: existing, error: selErr } = await db
+                .from('apartment_records')
+                .select('id, apartment_code, period')
+                .in('apartment_code', codes);
+            if (selErr) throw selErr;
+            const toDelete = (existing || [])
+                .filter(r => !currentKeys.has(r.apartment_code + '||' + r.period))
+                .map(r => r.id);
+            if (toDelete.length > 0) {
+                const { error: delErr } = await db.from('apartment_records').delete().in('id', toDelete);
+                if (delErr) throw delErr;
+            }
+        }
+
+        document.getElementById('loadingOverlay').classList.remove('active');
+        setSaveStatus('saved', '✓ محفوظ');
+        showToast('تم حفظ ' + rows.length + ' سجل في Supabase!');
+    } catch(e) {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        setSaveStatus('error', '✗ خطأ في الحفظ');
+        showToast('خطأ في الحفظ: ' + e.message, 'error');
+    }
+}
+
+function refreshData() { loadDataFromSupabase(); }
+
+// ================================================================
+// PRINT
+// ================================================================
+function showPrintModal(sId,tabId,type) {
+    currentPrintTarget={sId,tabId,type};
+    const body=document.getElementById('printModalBody'); body.innerHTML='';
+    const rows=document.querySelectorAll('#tbody-'+sId+'-'+tabId+' tr');
+    const aptName=document.getElementById('name-'+sId+'-'+tabId)?.value||'الشقة';
+    const hdr=document.createElement('div'); hdr.className='mb-4 p-3 bg-gray-100 rounded-lg';
+    hdr.innerHTML='<strong>الشقة:</strong> '+aptName+' <span class="text-gray-500">('+rows.length+' صف)</span>';
+    body.appendChild(hdr);
+    rows.forEach(row=>{
+        const rn=row.dataset.rowNum;
+        const period=type==='main'?document.getElementById('main-period-'+sId+'-'+tabId+'-'+rn)?.value:document.getElementById('sub-period-'+sId+'-'+tabId+'-'+rn)?.value;
+        const d=document.createElement('div'); d.className='print-row-item';
+        d.innerHTML='<input type="checkbox" class="print-checkbox mr-3" id="modal-check-'+rn+'" checked>'+
+            '<label for="modal-check-'+rn+'" class="flex-1 cursor-pointer"><span class="font-bold">الفترة:</span> '+(period||'غير محدد')+' | <span class="font-bold">الصف #'+rn+'</span></label>';
+        body.appendChild(d);
+    });
+    document.getElementById('printModal').classList.add('active');
+}
+function closePrintModal() { document.getElementById('printModal').classList.remove('active'); }
+function selectAllRows() { document.querySelectorAll('#printModalBody input[type="checkbox"]').forEach(c=>c.checked=true); }
+function deselectAllRows() { document.querySelectorAll('#printModalBody input[type="checkbox"]').forEach(c=>c.checked=false); }
+
+function confirmPrint() {
+    if (!currentPrintTarget) return;
+    const {sId,tabId,type}=currentPrintTarget;
+    const aptName=document.getElementById('name-'+sId+'-'+tabId)?.value||'الشقة';
+    const sel=[];
+    document.querySelectorAll('#printModalBody input[type="checkbox"]:checked').forEach(c=>sel.push(c.id.replace('modal-check-','')));
+    if (!sel.length) { showToast('الرجاء اختيار صف واحد على الأقل','error'); return; }
+    generatePrint(sId,tabId,type,aptName,sel);
+    closePrintModal();
+}
+
+function getV(id) { const e=document.getElementById(id); return e ? safeNum(e.value!==undefined?e.value:e.textContent) : '0'; }
+
+function generatePrint(sId,tabId,type,aptName,sel) {
+    const preview=document.getElementById('printPreview'); preview.innerHTML='';
+    sel.forEach(rn=>{
+        const isMain=type==='main';
+        const pre=isMain?'main':'sub';
+        const d={
+            period: getV(pre+'-period-'+sId+'-'+tabId+'-'+rn),
+            current: getV(isMain?'main-company-current-'+sId+'-'+tabId+'-'+rn:'sub-current-'+sId+'-'+tabId+'-'+rn),
+            previous: getV(isMain?'main-company-prev-'+sId+'-'+tabId+'-'+rn:'sub-prev-'+sId+'-'+tabId+'-'+rn),
+            subSum: isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'—',
+            consumption: getV(pre+'-consumption-'+sId+'-'+tabId+'-'+rn),
+            multiplier: getV(pre+'-mult-'+sId+'-'+tabId+'-'+rn),
+            value: getV(pre+'-value-'+sId+'-'+tabId+'-'+rn),
+            fees: getV(pre+'-fees-'+sId+'-'+tabId+'-'+rn),
+            beforeTax: getV(pre+'-before-tax-'+sId+'-'+tabId+'-'+rn),
+            tax: getV(pre+'-tax-'+sId+'-'+tabId+'-'+rn),
+            water: getV(pre+'-water-'+sId+'-'+tabId+'-'+rn),
+            total: getV(pre+'-total-'+sId+'-'+tabId+'-'+rn)
+        };
+        const printRows = isMain ? [
+            {label:'الفترة',value:d.period,color:'gray'},
+            {label:'عداد الشركة (الحالي)',value:d.current,color:'cream-light'},
+            {label:'مجموع استهلاك الشقق الفرعية',value:d.subSum,color:'yellow-soft'},
+            {label:'كمية الاستهلاك',value:d.consumption,color:'golden'},
+            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+            {label:'المجموع الكلي',value:d.total,total:true}
+        ] : [
+            {label:'الفترة',value:d.period,color:'gray'},
+            {label:'القراءة الحالية',value:d.current,color:'cream-light'},
+            {label:'القراءة السابقة',value:d.previous,color:'cream-light'},
+            {label:'الاستهلاك',value:d.consumption,color:'yellow-soft'},
+            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+            {label:'المجموع الكلي',value:d.total,total:true}
+        ];
+        const page=document.createElement('div'); page.className='print-page';
+        page.innerHTML='<div class="print-header"><div class="print-title">فاتورة الكهرباء والماء والصرف الصحي</div><div class="print-apartment">'+aptName+'</div></div>'+
+            '<table class="print-table">'+
+            printRows.map(r=>'<tr class="'+(r.total?'print-row-total':'print-row-'+r.color)+'"><td class="print-label">'+r.label+'</td><td class="print-value">'+r.value+'</td></tr>').join('')+
+            '</table><div class="print-footer">تم إنشاء هذه الفاتورة إلكترونياً بتاريخ '+new Date().toLocaleDateString('en-US')+'</div>';
+        preview.appendChild(page);
+    });
+    setTimeout(()=>window.print(),100);
+}
+
+
+// ================================================================
+// PRINT ALL
+// ================================================================
+function showPrintAllModal() {
+    const body = document.getElementById('printAllModalBody');
+    body.innerHTML = '';
+    let totalRows = 0;
+
+    Object.keys(sectionData).forEach(sId => {
+        const secName = document.getElementById('section-name-'+sId)?.value || 'u0642u0633u0645 '+sId;
+
+        // header for section
+        const secHdr = document.createElement('div');
+        secHdr.className = 'px-4 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg mb-2 mt-3';
+        secHdr.innerHTML = '<i class="fas fa-folder ml-2"></i>' + secName;
+        body.appendChild(secHdr);
+
+        sectionData[sId].tabs.forEach(tab => {
+            const aptName = document.getElementById('name-'+sId+'-'+tab.id)?.value || tab.name;
+            const rows = document.querySelectorAll('#tbody-'+sId+'-'+tab.id+' tr');
+            if (!rows.length) return;
+
+            // apartment header
+            const aptHdr = document.createElement('div');
+            aptHdr.className = 'px-3 py-1 bg-gray-100 text-gray-700 font-semibold text-xs rounded mb-1 flex items-center gap-2';
+            aptHdr.innerHTML = '<i class="fas ' + (tab.type==='main'?'fa-building text-yellow-600':'fa-home text-blue-600') + '"></i>' + aptName;
+            body.appendChild(aptHdr);
+
+            rows.forEach(row => {
+                const rn = row.dataset.rowNum;
+                const pre = tab.type==='main'?'main':'sub';
+                const periodEl = document.getElementById(pre+'-period-'+sId+'-'+tab.id+'-'+rn);
+                const period = periodEl?.value || 'غير محدد';
+
+                totalRows++;
+                const d = document.createElement('div');
+                d.className = 'print-row-item';
+                d.innerHTML = '<input type="checkbox" class="print-checkbox mr-3 print-all-check" ' +
+                    'data-sid="'+sId+'" data-tabid="'+tab.id+'" data-rownum="'+rn+'" data-type="'+tab.type+'" data-aptname="'+aptName+'" ' +
+                    'id="pac-'+sId+'-'+tab.id+'-'+rn+'" checked>' +
+                    '<label for="pac-'+sId+'-'+tab.id+'-'+rn+'" class="flex-1 cursor-pointer text-sm">' +
+                    '<span class="font-bold text-gray-700">'+period+'</span>' +
+                    ' <span class="text-gray-400 text-xs">| الصف #'+rn+'</span></label>';
+                body.appendChild(d);
+            });
+        });
+    });
+
+    updatePrintAllCount();
+    document.getElementById('printAllModal').classList.add('active');
+}
+
+function updatePrintAllCount() {
+    const total = document.querySelectorAll('.print-all-check').length;
+    const checked = document.querySelectorAll('.print-all-check:checked').length;
+    document.getElementById('printAllCount').textContent = 'محدد: '+checked+'/'+total;
+    document.querySelectorAll('.print-all-check').forEach(c => {
+        c.onchange = updatePrintAllCount;
+    });
+}
+
+function closePrintAllModal() { document.getElementById('printAllModal').classList.remove('active'); }
+function selectAllPrintAll() { document.querySelectorAll('.print-all-check').forEach(c=>{c.checked=true;}); updatePrintAllCount(); }
+function deselectAllPrintAll() { document.querySelectorAll('.print-all-check').forEach(c=>{c.checked=false;}); updatePrintAllCount(); }
+
+function confirmPrintAll() {
+    const checked = document.querySelectorAll('.print-all-check:checked');
+    if (!checked.length) { showToast('u0627u0644u0631u062cu0627u0621 u062au062du062fu064au062f u0641u0627u062au0648u0631u0629 u0648u0627u062du062fu0629 u0639u0644u0649 u0627u0644u0623u0642u0644', 'error'); return; }
+
+    const preview = document.getElementById('printPreview');
+    preview.innerHTML = '';
+
+    checked.forEach(cb => {
+        const sId = cb.dataset.sid;
+        const tabId = cb.dataset.tabid;
+        const rn = cb.dataset.rownum;
+        const type = cb.dataset.type;
+        const aptName = cb.dataset.aptname;
+        const isMain = type==='main';
+        const pre = isMain?'main':'sub';
+
+        const d = {
+            period:    getV(pre+'-period-'+sId+'-'+tabId+'-'+rn),
+            current:   getV(isMain?'main-company-current-'+sId+'-'+tabId+'-'+rn:'sub-current-'+sId+'-'+tabId+'-'+rn),
+            previous:  getV(isMain?'main-company-prev-'+sId+'-'+tabId+'-'+rn:'sub-prev-'+sId+'-'+tabId+'-'+rn),
+            subSum:    isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'u2014',
+            consumption: getV(pre+'-consumption-'+sId+'-'+tabId+'-'+rn),
+            multiplier:  getV(pre+'-mult-'+sId+'-'+tabId+'-'+rn),
+            value:       getV(pre+'-value-'+sId+'-'+tabId+'-'+rn),
+            fees:        getV(pre+'-fees-'+sId+'-'+tabId+'-'+rn),
+            beforeTax:   getV(pre+'-before-tax-'+sId+'-'+tabId+'-'+rn),
+            tax:         getV(pre+'-tax-'+sId+'-'+tabId+'-'+rn),
+            water:       getV(pre+'-water-'+sId+'-'+tabId+'-'+rn),
+            total:       getV(pre+'-total-'+sId+'-'+tabId+'-'+rn)
+        };
+
+        const printRows = isMain ? [
+            {label:'الفترة',value:d.period,color:'gray'},
+            {label:'عداد الشركة (الحالي)',value:d.current,color:'cream-light'},
+            {label:'مجموع استهلاك الشقق الفرعية',value:d.subSum,color:'yellow-soft'},
+            {label:'كمية الاستهلاك',value:d.consumption,color:'golden'},
+            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+            {label:'المجموع الكلي',value:d.total,total:true}
+        ] : [
+            {label:'الفترة',value:d.period,color:'gray'},
+            {label:'القراءة الحالية',value:d.current,color:'cream-light'},
+            {label:'القراءة السابقة',value:d.previous,color:'cream-light'},
+            {label:'الاستهلاك',value:d.consumption,color:'yellow-soft'},
+            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+            {label:'المجموع الكلي',value:d.total,total:true}
+        ];
+
+        const page = document.createElement('div');
+        page.className = 'print-page';
+        page.innerHTML = '<div class="print-header"><div class="print-title">u0641u0627u062au0648u0631u0629 u0627u0644u0643u0647u0631u0628u0627u0621 u0648u0627u0644u0635u0631u0641 u0627u0644u0635u062du064a</div><div class="print-apartment">'+aptName+'</div></div>' +
+            '<table class="print-table">'+
+            printRows.map(r=>'<tr class="'+( r.total?'print-row-total':'print-row-'+r.color)+'">'+'<td class="print-label">'+r.label+'</td><td class="print-value">'+r.value+'</td></tr>').join('')+
+            '</table><div class="print-footer">u062au0645 u0625u0646u0634u0627u0621 u0647u0630u0647 u0627u0644u0641u0627u062au0648u0631u0629 u0625u0644u0643u062au0631u0648u0646u064au0627u064b u0628u062au0627u0631u064au062e '+new Date().toLocaleDateString('en-US')+'</div>';
+        preview.appendChild(page);
+    });
+
+    closePrintAllModal();
+    setTimeout(()=>window.print(), 100);
+}
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, type) {
+    type=type||'success';
+    const t=document.getElementById('toast');
+    t.querySelector('i').className=type==='error'?'fas fa-exclamation-circle text-red-400':'fas fa-check-circle text-green-400';
+    document.getElementById('toastMessage').textContent=msg;
+    t.classList.remove('translate-y-20');
+    setTimeout(()=>t.classList.add('translate-y-20'),3500);
+}
+</script>
+</body>
+</html>
