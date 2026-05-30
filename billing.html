@@ -349,16 +349,16 @@
 <div id="printAllModal" class="print-modal no-print">
     <div class="print-modal-content" style="max-width:750px;">
         <div class="print-modal-header" style="background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 100%);">
-            <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-print"></i> u0637u0628u0627u0639u0629 u0627u0644u0643u0644 u2014 u0627u062eu062au0631 u0627u0644u0641u062au0631u0627u062a</h3>
+            <h3 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-print"></i> طباعة الكل — اختر الفترات</h3>
             <button onclick="closePrintAllModal()" class="text-white hover:text-gray-200"><i class="fas fa-times text-xl"></i></button>
         </div>
         <div class="print-modal-body" id="printAllModalBody" style="max-height:60vh;"></div>
         <div class="print-modal-footer">
-            <button onclick="selectAllPrintAll()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">u062au062du062fu064au062f u0627u0644u0643u0644</button>
-            <button onclick="deselectAllPrintAll()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">u0625u0644u063au0627u0621 u0627u0644u0643u0644</button>
+            <button onclick="selectAllPrintAll()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">تحديد الكل</button>
+            <button onclick="deselectAllPrintAll()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">إلغاء الكل</button>
             <span class="text-sm text-gray-500 flex items-center" id="printAllCount"></span>
             <button onclick="confirmPrintAll()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center gap-2">
-                <i class="fas fa-print"></i> u0637u0628u0627u0639u0629 u0627u0644u0645u062du062fu062f
+                <i class="fas fa-print"></i> طباعة المحدد
             </button>
         </div>
     </div>
@@ -1352,7 +1352,7 @@ function showPrintAllModal() {
     let totalRows = 0;
 
     Object.keys(sectionData).forEach(sId => {
-        const secName = document.getElementById('section-name-'+sId)?.value || 'u0642u0633u0645 '+sId;
+        const secName = document.getElementById('section-name-'+sId)?.value || 'قسم '+sId;
 
         // header for section
         const secHdr = document.createElement('div');
@@ -1410,7 +1410,7 @@ function deselectAllPrintAll() { document.querySelectorAll('.print-all-check').f
 
 function confirmPrintAll() {
     const checked = document.querySelectorAll('.print-all-check:checked');
-    if (!checked.length) { showToast('u0627u0644u0631u062cu0627u0621 u062au062du062fu064au062f u0641u0627u062au0648u0631u0629 u0648u0627u062du062fu0629 u0639u0644u0649 u0627u0644u0623u0642u0644', 'error'); return; }
+    if (!checked.length) { showToast('الرجاء تحديد فاتورة واحدة على الأقل', 'error'); return; }
 
     const preview = document.getElementById('printPreview');
     preview.innerHTML = '';
@@ -1428,7 +1428,7 @@ function confirmPrintAll() {
             period:    getV(pre+'-period-'+sId+'-'+tabId+'-'+rn),
             current:   getV(isMain?'main-company-current-'+sId+'-'+tabId+'-'+rn:'sub-current-'+sId+'-'+tabId+'-'+rn),
             previous:  getV(isMain?'main-company-prev-'+sId+'-'+tabId+'-'+rn:'sub-prev-'+sId+'-'+tabId+'-'+rn),
-            subSum:    isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'u2014',
+            subSum:    isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'—',
             consumption: getV(pre+'-consumption-'+sId+'-'+tabId+'-'+rn),
             multiplier:  getV(pre+'-mult-'+sId+'-'+tabId+'-'+rn),
             value:       getV(pre+'-value-'+sId+'-'+tabId+'-'+rn),
@@ -1467,10 +1467,10 @@ function confirmPrintAll() {
 
         const page = document.createElement('div');
         page.className = 'print-page';
-        page.innerHTML = '<div class="print-header"><div class="print-title">u0641u0627u062au0648u0631u0629 u0627u0644u0643u0647u0631u0628u0627u0621 u0648u0627u0644u0635u0631u0641 u0627u0644u0635u062du064a</div><div class="print-apartment">'+aptName+'</div></div>' +
+        page.innerHTML = '<div class="print-header"><div class="print-title">فاتورة الكهرباء والصرف الصحي</div><div class="print-apartment">'+aptName+'</div></div>' +
             '<table class="print-table">'+
             printRows.map(r=>'<tr class="'+( r.total?'print-row-total':'print-row-'+r.color)+'">'+'<td class="print-label">'+r.label+'</td><td class="print-value">'+r.value+'</td></tr>').join('')+
-            '</table><div class="print-footer">u062au0645 u0625u0646u0634u0627u0621 u0647u0630u0647 u0627u0644u0641u0627u062au0648u0631u0629 u0625u0644u0643u062au0631u0648u0646u064au0627u064b u0628u062au0627u0631u064au062e '+new Date().toLocaleDateString('en-US')+'</div>';
+            '</table><div class="print-footer">تم إنشاء هذه الفاتورة إلكترونياً بتاريخ '+new Date().toLocaleDateString('en-US')+'</div>';
         preview.appendChild(page);
     });
 
