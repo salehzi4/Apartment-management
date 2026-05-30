@@ -234,6 +234,13 @@
         #saveStatus.saved { background: #dcfce7; color: #16a34a; }
         #saveStatus.saving { background: #fef3c7; color: #d97706; }
         #saveStatus.error { background: #fee2e2; color: #dc2626; }
+.incmain-cell { text-align:center; }
+.incmain-toggle { display:inline-flex; align-items:center; cursor:pointer; }
+.incmain-toggle input { width:0; height:0; opacity:0; position:absolute; }
+.incmain-toggle span { width:38px; height:20px; background:#cbd5e1; border-radius:20px; position:relative; transition:.2s; display:inline-block; }
+.incmain-toggle span::after { content:''; position:absolute; top:2px; right:2px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.2s; }
+.incmain-toggle input:checked + span { background:#3b82f6; }
+.incmain-toggle input:checked + span::after { right:20px; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -834,7 +841,7 @@ function buildSlideHTML(sId, tabId, type, aptName) {
     const fn = isMain ? 'addRowToMain' : 'addRowToSub';
     const hdrs = isMain
         ? '<th>عداد الشركة (حالي)</th><th style="background:#fef3c7;color:#d97706;border:2px solid #fbbf24;">مجموع الفرعية</th><th>كمية الاستهلاك</th>'
-        : '<th>القراءة الحالية</th><th>القراءة السابقة</th><th>الاستهلاك</th>';
+        : '<th>القراءة الحالية</th><th>القراءة السابقة</th><th>الاستهلاك</th><th style="background:#eff6ff;color:#1d4ed8;" title="إدخال الصف في مجموع الرئيسية">في المجموع</th>';
     return '<div class="flex justify-between items-center mb-4">' +
         '<h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">' +
         '<i class="fas ' + (isMain ? 'fa-building text-yellow-600' : 'fa-home text-blue-600') + '"></i>' +
@@ -885,7 +892,8 @@ function addLoadedRow(sId, tabId, type, data, rowNum) {
             prev: data.company_previous, mult: data.multiplier,
             fees: data.fees, water: data.water,
             consumption: data.consumption, value: data.value,
-            beforeTax: data.before_tax, tax: data.tax, total: data.total
+            beforeTax: data.before_tax, tax: data.tax, total: data.total,
+            includeInMain: (data.include_in_main !== false)
         });
     }
     tbody.appendChild(tr);
@@ -914,6 +922,7 @@ function subRowHTML(sId, tabId, rowNum, d) {
         '<td><input type="number" id="sub-current-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.current||'')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
         '<td><input type="number" id="sub-prev-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.prev||'')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
         '<td id="sub-consumption-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.consumption||'0.00')+'</td>' +
+        '<td class="incmain-cell"><label class="incmain-toggle" title="إدخال هذا الصف في مجموع الشقة الرئيسية"><input type="checkbox" id="sub-incmain-'+sId+'-'+tabId+'-'+rowNum+'" '+((d.includeInMain===false)?'':'checked')+' onchange="toggleIncludeInMain('+sId+',\''+tabId+'\','+rowNum+')"><span></span></label></td>' +
         '<td><input type="number" id="sub-mult-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.mult||'0.18')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
         '<td id="sub-value-'+sId+'-'+tabId+'-'+rowNum+'" class="calc-cell">'+safeNum(d.value||'0.00')+'</td>' +
         '<td><input type="number" id="sub-fees-'+sId+'-'+tabId+'-'+rowNum+'" class="input-cell" step="0.01" value="'+safeNum(d.fees||'0')+'" onchange="calculateSub('+sId+',\''+tabId+'\','+rowNum+')"></td>' +
@@ -1078,6 +1087,9 @@ function updateSubSums(sId) {
             subTabs.forEach(st => {
                 document.querySelectorAll('#tbody-'+sId+'-'+st.id+' tr').forEach(sr => {
                     if (periodsMatch(sr.dataset.period, period)) {
+                        // احترام خانة "في المجموع": إن أُلغيت، يُستثنى هذا الصف
+                        const inc = sr.querySelector('input[id^="sub-incmain-"]');
+                        if (inc && !inc.checked) return;
                         const c = sr.querySelector('td[id^="sub-consumption-"]');
                         if (c) total += parseFloat(toEnglishDigits(c.textContent))||0;
                     }
@@ -1088,6 +1100,12 @@ function updateSubSums(sId) {
             if (cell) { cell.textContent = safeNum(total.toFixed(2)); calculateMain(sId,mt.id,rn); }
         });
     });
+}
+
+// تبديل إدخال صف فرعي في مجموع الرئيسية — يعيد الحساب فوراً
+function toggleIncludeInMain(sId, tabId, rowNum) {
+    updateSubSums(sId);
+    if (typeof setSaveStatus === 'function') setSaveStatus('unsaved', '● غير محفوظ');
 }
 
 // ================================================================
@@ -1178,6 +1196,7 @@ async function saveAllToSupabase() {
                     tax: parseFloat(p((isMain?'main':'sub')+'-tax-'+sId+'-'+tab.id+'-'+rn))||0,
                     water: parseFloat(p((isMain?'main':'sub')+'-water-'+sId+'-'+tab.id+'-'+rn))||0,
                     total: parseFloat(p((isMain?'main':'sub')+'-total-'+sId+'-'+tab.id+'-'+rn))||0,
+                    include_in_main: isMain ? true : (document.getElementById('sub-incmain-'+sId+'-'+tab.id+'-'+rn)?.checked !== false),
                 });
             });
         });
