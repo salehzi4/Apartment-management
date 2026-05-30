@@ -8,7 +8,8 @@
 (function () {
   'use strict';
 
-  var sb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
+  // استخدم العميل المشترك المُصادَق إن وُجد (من js/auth.js)، وإلا أنشئ واحداً.
+  var sb = window.sbClient || supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_ANON_KEY);
 
   // ---------- أدوات مساعدة (منقولة من النظام الأصلي) ----------
   function generateId() {

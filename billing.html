@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- إعداد الاتصال المشترك (نفس قاعدة البيانات للوحدتين) -->
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
     <style>
         * { font-variant-numeric: tabular-nums; }
         input[type="number"], input[type="text"], td, th, span, div, p { -webkit-locale: "en"; }
@@ -591,7 +592,7 @@ function loadConfig() {
 
 function initSupabase(url, key) {
     try {
-        db = supabase.createClient(url, key);
+        db = window.sbClient || supabase.createClient(url, key);
         isConnected = true;
         setDbStatus(true);
         return true;
