@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- إعداد الاتصال المشترك (نفس قاعدة البيانات للوحدتين) -->
     <script src="js/config.js"></script>
@@ -362,8 +363,8 @@
             <button onclick="selectAllPrintAll()" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm">تحديد الكل</button>
             <button onclick="deselectAllPrintAll()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">إلغاء الكل</button>
             <span class="text-sm text-gray-500 flex items-center" id="printAllCount"></span>
-            <button onclick="confirmPrintAll()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center gap-2">
-                <i class="fas fa-print"></i> طباعة المحدد
+            <button onclick="saveSelectedAsImages()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold flex items-center gap-2">
+                <i class="fas fa-image"></i> حفظ كصور
             </button>
         </div>
     </div>
@@ -1413,74 +1414,126 @@ function closePrintAllModal() { document.getElementById('printAllModal').classLi
 function selectAllPrintAll() { document.querySelectorAll('.print-all-check').forEach(c=>{c.checked=true;}); updatePrintAllCount(); }
 function deselectAllPrintAll() { document.querySelectorAll('.print-all-check').forEach(c=>{c.checked=false;}); updatePrintAllCount(); }
 
+// يبني عنصر صفحة فاتورة واحدة من خانة التحديد (مُعاد استخدامه للطباعة والصور)
+function buildInvoicePage(cb) {
+    const sId = cb.dataset.sid;
+    const tabId = cb.dataset.tabid;
+    const rn = cb.dataset.rownum;
+    const type = cb.dataset.type;
+    const aptName = cb.dataset.aptname;
+    const isMain = type==='main';
+    const pre = isMain?'main':'sub';
+
+    const d = {
+        period:    getV(pre+'-period-'+sId+'-'+tabId+'-'+rn),
+        current:   getV(isMain?'main-company-current-'+sId+'-'+tabId+'-'+rn:'sub-current-'+sId+'-'+tabId+'-'+rn),
+        previous:  getV(isMain?'main-company-prev-'+sId+'-'+tabId+'-'+rn:'sub-prev-'+sId+'-'+tabId+'-'+rn),
+        subSum:    isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'—',
+        consumption: getV(pre+'-consumption-'+sId+'-'+tabId+'-'+rn),
+        multiplier:  getV(pre+'-mult-'+sId+'-'+tabId+'-'+rn),
+        value:       getV(pre+'-value-'+sId+'-'+tabId+'-'+rn),
+        fees:        getV(pre+'-fees-'+sId+'-'+tabId+'-'+rn),
+        beforeTax:   getV(pre+'-before-tax-'+sId+'-'+tabId+'-'+rn),
+        tax:         getV(pre+'-tax-'+sId+'-'+tabId+'-'+rn),
+        water:       getV(pre+'-water-'+sId+'-'+tabId+'-'+rn),
+        total:       getV(pre+'-total-'+sId+'-'+tabId+'-'+rn)
+    };
+
+    const printRows = isMain ? [
+        {label:'الفترة',value:d.period,color:'gray'},
+        {label:'عداد الشركة (الحالي)',value:d.current,color:'cream-light'},
+        {label:'مجموع استهلاك الشقق الفرعية',value:d.subSum,color:'yellow-soft'},
+        {label:'كمية الاستهلاك',value:d.consumption,color:'golden'},
+        {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+        {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+        {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+        {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+        {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+        {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+        {label:'المجموع الكلي',value:d.total,total:true}
+    ] : [
+        {label:'الفترة',value:d.period,color:'gray'},
+        {label:'القراءة الحالية',value:d.current,color:'cream-light'},
+        {label:'القراءة السابقة',value:d.previous,color:'cream-light'},
+        {label:'الاستهلاك',value:d.consumption,color:'yellow-soft'},
+        {label:'معامل الضرب',value:d.multiplier,color:'cream'},
+        {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
+        {label:'رسوم العداد',value:d.fees,color:'turquoise'},
+        {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
+        {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
+        {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
+        {label:'المجموع الكلي',value:d.total,total:true}
+    ];
+
+    const page = document.createElement('div');
+    page.className = 'print-page';
+    page.innerHTML = '<div class="print-header"><div class="print-title">فاتورة الكهرباء والصرف الصحي</div><div class="print-apartment">'+aptName+'</div></div>' +
+        '<table class="print-table">'+
+        printRows.map(r=>'<tr class="'+( r.total?'print-row-total':'print-row-'+r.color)+'">'+'<td class="print-label">'+r.label+'</td><td class="print-value">'+r.value+'</td></tr>').join('')+
+        '</table><div class="print-footer">تم إنشاء هذه الفاتورة إلكترونياً بتاريخ '+new Date().toLocaleDateString('en-US')+'</div>';
+    return { page: page, aptName: aptName, period: d.period };
+}
+
+// اسم ملف آمن من اسم الشقة والفترة
+function safeFileName(aptName, period) {
+    const clean = s => String(s||'').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').trim();
+    let name = clean(aptName);
+    let per = clean(period).replace(/[–—]/g,'-');
+    return (name || 'فاتورة') + (per ? '_' + per : '');
+}
+
+// طباعة مجمّعة (احتياطي — غير مستخدم في الزر الحالي، يُبقى للرجوع)
 function confirmPrintAll() {
     const checked = document.querySelectorAll('.print-all-check:checked');
     if (!checked.length) { showToast('الرجاء تحديد فاتورة واحدة على الأقل', 'error'); return; }
-
     const preview = document.getElementById('printPreview');
     preview.innerHTML = '';
-
-    checked.forEach(cb => {
-        const sId = cb.dataset.sid;
-        const tabId = cb.dataset.tabid;
-        const rn = cb.dataset.rownum;
-        const type = cb.dataset.type;
-        const aptName = cb.dataset.aptname;
-        const isMain = type==='main';
-        const pre = isMain?'main':'sub';
-
-        const d = {
-            period:    getV(pre+'-period-'+sId+'-'+tabId+'-'+rn),
-            current:   getV(isMain?'main-company-current-'+sId+'-'+tabId+'-'+rn:'sub-current-'+sId+'-'+tabId+'-'+rn),
-            previous:  getV(isMain?'main-company-prev-'+sId+'-'+tabId+'-'+rn:'sub-prev-'+sId+'-'+tabId+'-'+rn),
-            subSum:    isMain?getV('main-sub-sum-'+sId+'-'+tabId+'-'+rn):'—',
-            consumption: getV(pre+'-consumption-'+sId+'-'+tabId+'-'+rn),
-            multiplier:  getV(pre+'-mult-'+sId+'-'+tabId+'-'+rn),
-            value:       getV(pre+'-value-'+sId+'-'+tabId+'-'+rn),
-            fees:        getV(pre+'-fees-'+sId+'-'+tabId+'-'+rn),
-            beforeTax:   getV(pre+'-before-tax-'+sId+'-'+tabId+'-'+rn),
-            tax:         getV(pre+'-tax-'+sId+'-'+tabId+'-'+rn),
-            water:       getV(pre+'-water-'+sId+'-'+tabId+'-'+rn),
-            total:       getV(pre+'-total-'+sId+'-'+tabId+'-'+rn)
-        };
-
-        const printRows = isMain ? [
-            {label:'الفترة',value:d.period,color:'gray'},
-            {label:'عداد الشركة (الحالي)',value:d.current,color:'cream-light'},
-            {label:'مجموع استهلاك الشقق الفرعية',value:d.subSum,color:'yellow-soft'},
-            {label:'كمية الاستهلاك',value:d.consumption,color:'golden'},
-            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
-            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
-            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
-            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
-            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
-            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
-            {label:'المجموع الكلي',value:d.total,total:true}
-        ] : [
-            {label:'الفترة',value:d.period,color:'gray'},
-            {label:'القراءة الحالية',value:d.current,color:'cream-light'},
-            {label:'القراءة السابقة',value:d.previous,color:'cream-light'},
-            {label:'الاستهلاك',value:d.consumption,color:'yellow-soft'},
-            {label:'معامل الضرب',value:d.multiplier,color:'cream'},
-            {label:'قيمة الاستهلاك',value:d.value,color:'blue-light'},
-            {label:'رسوم العداد',value:d.fees,color:'turquoise'},
-            {label:'المجموع قبل الضريبة',value:d.beforeTax,color:'mint'},
-            {label:'الضريبة (15%)',value:d.tax,color:'yellow-soft'},
-            {label:'الماء والصرف الصحي',value:d.water,color:'blue-light'},
-            {label:'المجموع الكلي',value:d.total,total:true}
-        ];
-
-        const page = document.createElement('div');
-        page.className = 'print-page';
-        page.innerHTML = '<div class="print-header"><div class="print-title">فاتورة الكهرباء والصرف الصحي</div><div class="print-apartment">'+aptName+'</div></div>' +
-            '<table class="print-table">'+
-            printRows.map(r=>'<tr class="'+( r.total?'print-row-total':'print-row-'+r.color)+'">'+'<td class="print-label">'+r.label+'</td><td class="print-value">'+r.value+'</td></tr>').join('')+
-            '</table><div class="print-footer">تم إنشاء هذه الفاتورة إلكترونياً بتاريخ '+new Date().toLocaleDateString('en-US')+'</div>';
-        preview.appendChild(page);
-    });
-
+    checked.forEach(cb => preview.appendChild(buildInvoicePage(cb).page));
     closePrintAllModal();
     setTimeout(()=>window.print(), 100);
+}
+
+// حفظ كل فاتورة محدّدة كصورة PNG منفصلة
+async function saveSelectedAsImages() {
+    const checked = Array.from(document.querySelectorAll('.print-all-check:checked'));
+    if (!checked.length) { showToast('الرجاء تحديد فاتورة واحدة على الأقل', 'error'); return; }
+    if (typeof html2canvas === 'undefined') { showToast('تعذّر تحميل أداة الصور — تحقّق من الاتصال', 'error'); return; }
+
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.getElementById('loadingText').textContent = 'جاري إنشاء الصور...';
+
+    // حاوية مؤقتة خارج الشاشة لرسم كل فاتورة بمقاس ثابت
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed; left:-99999px; top:0; background:#fff;';
+    document.body.appendChild(stage);
+
+    let ok = 0, fail = 0;
+    try {
+        for (let i = 0; i < checked.length; i++) {
+            const info = buildInvoicePage(checked[i]);
+            // مقاس مناسب للصورة (عرض A4 تقريبي بالبكسل)
+            info.page.style.width = '800px';
+            info.page.style.minHeight = 'auto';
+            info.page.style.margin = '0';
+            stage.innerHTML = '';
+            stage.appendChild(info.page);
+            try {
+                const canvas = await html2canvas(info.page, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = safeFileName(info.aptName, info.period) + '.png';
+                document.body.appendChild(a); a.click(); a.remove();
+                ok++;
+                await new Promise(r => setTimeout(r, 350)); // فاصل يمنع حجب التنزيلات المتعددة
+            } catch (e) { fail++; console.error('image error', e); }
+        }
+    } finally {
+        stage.remove();
+        document.getElementById('loadingOverlay').classList.remove('active');
+    }
+    closePrintAllModal();
+    showToast('تم حفظ ' + ok + ' صورة' + (fail ? ' (فشل ' + fail + ')' : ''), fail ? 'error' : 'success');
 }
 // ================================================================
 // TOAST
