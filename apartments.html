@@ -1,26 +1,5219 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>وحدة إدارة الشقق</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Cairo', sans-serif; background: #f1f5f9; margin: 0;
-               min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .card { background: #fff; border: 2px dashed #cbd5e1; border-radius: 16px;
-                padding: 40px; text-align: center; color: #475569; max-width: 460px; }
-        .card i { font-size: 48px; color: #f59e0b; margin-bottom: 16px; }
-        .card h2 { color: #1e293b; margin: 0 0 8px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>وحدة إدارة الشقق</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ============ المتغيرات الأساسية ============ */
+:root {
+  --primary: #1e3a5f;
+  --primary-light: #2c5282;
+  --primary-dark: #0f2540;
+  --accent: #d4a017;
+  --accent-light: #f0c14b;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --warning: #ea580c;
+  --warning-light: #ffedd5;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --bg: #f5f7fa;
+  --white: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --transition: all 0.2s ease;
+}
+
+/* ============ إعادة الضبط ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  font-family: 'Segoe UI', Tahoma, 'Cairo', 'Tajawal', Arial, sans-serif;
+  direction: rtl;
+  background: var(--bg);
+  color: var(--gray-800);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ============ شريط التحميل العلوي ============ */
+.top-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(30, 58, 95, 0.1);
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.top-loader-bar {
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  animation: topLoaderMove 1.2s linear infinite;
+}
+
+@keyframes topLoaderMove {
+  0% { margin-right: -30%; }
+  100% { margin-right: 100%; }
+}
+
+/* ============ شاشة التحميل ============ */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  gap: 16px;
+}
+
+.loading-screen p {
+  color: var(--gray-600);
+  font-size: 15px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ الهيدر ============ */
+.app-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: var(--white);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.btn-icon {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: var(--white);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover, .btn-icon:active {
+  background: rgba(255,255,255,0.25);
+  transform: rotate(180deg);
+}
+
+/* ============ التابات ============ */
+.tabs {
+  background: var(--white);
+  display: flex;
+  border-bottom: 2px solid var(--gray-200);
+  position: sticky;
+  top: 64px;
+  z-index: 99;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-600);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.tab-btn:hover {
+  background: var(--gray-50);
+  color: var(--primary);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: var(--gray-50);
+}
+
+.tab-icon {
+  font-size: 20px;
+}
+
+/* ============ المحتوى الرئيسي ============ */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-header h2 {
+  color: var(--primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ============ الأزرار ============ */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  box-shadow: var(--shadow);
+}
+
+.btn-secondary {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+  background: var(--gray-300);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* ============ بطاقات الشقق - لوحة التحكم ============ */
+.apartments-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.apartment-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: var(--transition);
+}
+
+.apartment-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.apartment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.apartment-card-title {
+  color: var(--primary);
+  font-size: 17px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.apartment-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: var(--gray-100);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  background: var(--gray-200);
+}
+
+.icon-btn.delete:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.apartment-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--gray-200);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.info-value {
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+/* ============ النماذج ============ */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gray-700);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.required {
+  color: var(--danger);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.form-group input[readonly] {
+  background: var(--gray-100);
+  cursor: not-allowed;
+}
+
+.payments-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.payment-input-wrapper {
+  position: relative;
+}
+
+.payment-input-wrapper label {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+
+/* ============ Modal ============ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-small {
+  max-width: 480px;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.modal-header h3 {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--gray-500);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.modal-close:hover {
+  background: var(--gray-200);
+  color: var(--gray-800);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* ============ الجدول ============ */
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 13px;
+}
+
+.month-input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--white);
+}
+
+.month-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.table-wrapper {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  border: 1px solid var(--gray-200);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.data-table thead {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+}
+
+.data-table th {
+  padding: 14px 12px;
+  text-align: center;
+  color: var(--white);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 13px;
+}
+
+.data-table tbody tr {
+  transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+  background: var(--gray-50);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* الخلية القابلة للضغط */
+.clickable-cell {
+  cursor: pointer;
+  font-weight: 600;
+  position: relative;
+}
+
+.clickable-cell:hover {
+  background: var(--gray-100);
+}
+
+/* خلية اسم الشقة مع التولتب */
+.apartment-name-cell {
+  position: relative;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* حالة الإيجار/الكهرباء */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 90px;
+}
+
+.status-paid {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-unpaid {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.status-pending {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-none {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.status-empty {
+  color: var(--gray-400);
+  font-style: italic;
+}
+
+/* مدة العقد */
+.contract-days {
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.contract-days.normal {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.contract-days.warning {
+  background: var(--danger-light);
+  color: var(--danger);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.contract-days.expired {
+  background: var(--gray-300);
+  color: var(--gray-700);
+}
+
+/* ============ Tooltip اسم المستأجر ============ */
+.tenant-tooltip {
+  position: fixed;
+  background: var(--gray-900);
+  color: var(--white);
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 2000;
+  pointer-events: none;
+  display: none;
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
+  animation: fadeIn 0.15s ease;
+}
+
+.tenant-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--gray-900);
+}
+
+/* ============ بطاقات معلومات الشقق ============ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  border-top: 4px solid var(--primary);
+  transition: var(--transition);
+}
+
+.info-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.info-card.warning {
+  border-top-color: var(--danger);
+  background: linear-gradient(135deg, var(--white) 0%, #fff5f5 100%);
+}
+
+.info-card-title {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.contract-warning-badge {
+  background: var(--danger-light);
+  color: var(--danger);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  animation: pulse 2s infinite;
+}
+
+.info-card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.stat-label {
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.stat-value.success { color: var(--success); }
+.stat-value.danger { color: var(--danger); }
+.stat-value.pending { color: #1e40af; }
+
+/* بطاقة معلومات الشقة - حالة مدفوع بالكامل */
+.info-card.fully-paid {
+  border-top-color: #16a34a;
+  background: linear-gradient(135deg, var(--white) 0%, #f0fdf4 100%);
+}
+
+/* Checkbox مخصص */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.checkbox-label:hover {
+  background: #dcfce7;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--success);
+}
+
+/* جدولة الدفعات */
+.schedule-row {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.schedule-row-header {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.schedule-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.schedule-row-grid label {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.schedule-row-grid input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.schedule-row-grid input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .schedule-row-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payments-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success) 0%, var(--accent) 100%);
+  transition: width 0.5s ease;
+}
+
+/* ============ Empty State ============ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--gray-300);
+}
+
+.empty-icon {
+  font-size: 60px;
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  color: var(--gray-600);
+  font-size: 15px;
+  margin-bottom: 16px;
+}
+
+/* ============ Toast ============ */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 90%;
+}
+
+.toast {
+  background: var(--gray-900);
+  color: var(--white);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 600;
+  animation: slideUp 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.success {
+  background: var(--success);
+}
+
+.toast.error {
+  background: var(--danger);
+}
+
+.toast.warning {
+  background: var(--warning);
+}
+
+/* ============ Responsive - الجوال ============ */
+@media (max-width: 768px) {
+  body { font-size: 13px; }
+
+  .app-header { padding: 12px 16px; }
+  .app-header h1 { font-size: 17px; }
+
+  .tabs { top: 56px; }
+  .tab-btn {
+    min-width: 100px;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  .tab-icon { font-size: 18px; }
+
+  .main-content { padding: 12px; }
+
+  .section-header h2 { font-size: 18px; }
+
+  .apartments-list,
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .modal {
+    max-height: 95vh;
+    border-radius: var(--radius);
+  }
+
+  .modal-body { padding: 16px; }
+  .modal-header { padding: 14px 16px; }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 11px;
+    min-width: 70px;
+  }
+
+  .btn { padding: 9px 16px; font-size: 13px; }
+
+  .filter-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .month-input { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tab-text {
+    font-size: 11px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* ============ شريط التعديل الجماعي ============ */
+.bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  color: var(--white);
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.3s ease;
+}
+
+.bulk-actions-info {
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulk-actions-info::before {
+  content: '✓';
+  background: var(--success);
+  color: var(--white);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.bulk-actions-info #bulkSelectedCount {
+  background: var(--accent);
+  color: var(--gray-900);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.bulk-actions-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-select {
+  padding: 8px 12px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.95);
+  color: var(--gray-800);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  min-width: 150px;
+  cursor: pointer;
+}
+
+.bulk-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--white);
+}
+
+/* صف محدد */
+.row-selected {
+  background: #eff6ff !important;
+}
+
+.row-selected:hover {
+  background: #dbeafe !important;
+}
+
+.row-checkbox, #selectAllCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .bulk-actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bulk-actions-controls {
+    flex-direction: column;
+  }
+
+  .bulk-select {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .bulk-actions-controls .btn {
+    width: 100%;
+  }
+}
+.cell-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--white);
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cell-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.cell-select.paid {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.cell-select.unpaid {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.cell-select.none {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.payment-method-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.payment-date {
+  font-size: 11px;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.payment-date-cell {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* شارة رقم العقد */
+.contract-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.contract-num-cell {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Tajawal', monospace;
+  white-space: nowrap;
+}
+
+/* ============ السحب والإفلات ============ */
+.draggable-item {
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  cursor: grab;
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.draggable-item.dragging {
+  opacity: 0.5;
+}
+
+.draggable-item.drag-source {
+  transform: scale(0.97);
+}
+
+.draggable-item.drag-over {
+  border: 2px dashed var(--primary) !important;
+  background: rgba(30, 58, 95, 0.05);
+  transform: scale(1.02);
+}
+
+.drag-handle {
+  display: inline-block;
+  cursor: grab;
+  color: var(--gray-400);
+  font-size: 18px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  user-select: none;
+  letter-spacing: -2px;
+  transition: var(--transition);
+}
+
+.drag-handle:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* لمنع الـ drag على أزرار داخل البطاقة */
+.apartment-card .icon-btn,
+.summary-card .btn-edit-row,
+.summary-card-header-main {
+  cursor: pointer !important;
+}
+
+.apartment-card .icon-btn:active,
+.summary-card .btn-edit-row:active {
+  cursor: pointer !important;
+}
+
+/* ============ صفحة ملخص العقود ============ */
+
+/* بطاقات الإحصائيات في الأعلى */
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--gray-200);
+  border-top: 4px solid var(--primary);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.stat-card.stat-blue { border-top-color: #3b82f6; }
+.stat-card.stat-purple { border-top-color: #8b5cf6; }
+.stat-card.stat-green { border-top-color: #16a34a; }
+.stat-card.stat-orange { border-top-color: #f97316; }
+.stat-card.stat-red { border-top-color: #dc2626; background: linear-gradient(135deg, var(--white) 0%, #fef2f2 100%); }
+.stat-card.stat-gray { border-top-color: var(--gray-400); }
+
+.stat-card-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.stat-card-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.stat-card-label {
+  font-size: 12px;
+  color: var(--gray-600);
+  font-weight: 600;
+}
+
+/* شريط الفلاتر */
+.summary-filters-bar {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-filter-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summary-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--gray-100);
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.summary-filter-btn:hover {
+  background: var(--gray-200);
+}
+
+.summary-filter-btn.active {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary-dark);
+}
+
+.filter-count {
+  background: rgba(255,255,255,0.25);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 22px;
+}
+
+.summary-filter-btn:not(.active) .filter-count {
+  background: var(--white);
+  color: var(--gray-700);
+}
+
+.summary-search input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.summary-search input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* قائمة البطاقات */
+.summary-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.summary-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-card.has-overdue {
+  border-right: 4px solid var(--danger);
+  background: linear-gradient(135deg, var(--white) 0%, #fff5f5 100%);
+}
+
+.summary-card.fully-paid {
+  border-right: 4px solid var(--success);
+  background: linear-gradient(135deg, var(--white) 0%, #f0fdf4 100%);
+}
+
+.summary-card.expanded {
+  box-shadow: var(--shadow);
+}
+
+/* Header البطاقة */
+.summary-card-header {
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.summary-card-header:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+.summary-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.summary-card-title .apt-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.summary-card-title .expand-icon {
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.paid-badge {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.overdue-badge {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  animation: pulse 2s infinite;
+}
+
+.summary-card-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--gray-600);
+  align-items: center;
+}
+
+/* الملخص السريع */
+.summary-card-quick {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.quick-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.quick-label {
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.quick-value {
+  color: var(--gray-800);
+  font-weight: 700;
+}
+
+.quick-progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.quick-progress .progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.quick-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success) 0%, var(--accent) 100%);
+}
+
+.quick-progress .progress-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-700);
+  min-width: 32px;
+}
+
+.quick-overdue {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.quick-overdue .overdue-months {
+  color: #7f1d1d;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* تفاصيل البطاقة */
+.summary-card-details {
+  border-top: 2px dashed var(--gray-200);
+  padding: 14px 16px;
+  background: var(--gray-50);
+  animation: fadeIn 0.3s ease;
+}
+
+.details-title {
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* الجدول الشهري التفصيلي */
+.monthly-table-wrapper {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  border: 1px solid var(--gray-200);
+  margin-bottom: 16px;
+}
+
+.monthly-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 500px;
+}
+
+.monthly-detail-table thead {
+  background: var(--primary);
+}
+
+.monthly-detail-table th {
+  padding: 8px 10px;
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.monthly-detail-table td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 12px;
+}
+
+.monthly-detail-table tr:last-child td {
+  border-bottom: none;
+}
+
+.monthly-detail-table tr.row-overdue {
+  background: #fee2e2;
+}
+
+.monthly-detail-table tr.row-overdue:hover {
+  background: #fecaca;
+}
+
+.monthly-detail-table tr.row-complete {
+  background: #f0fdf4;
+}
+
+.monthly-detail-table tr:hover {
+  background: var(--gray-50);
+}
+
+.btn-edit-row {
+  background: var(--gray-100);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: var(--transition);
+}
+
+.btn-edit-row:hover {
+  background: var(--primary);
+  color: var(--white);
+}
+
+/* الملخص المالي */
+.details-summary {
+  margin-top: 12px;
+}
+
+.financial-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.financial-block {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 12px;
+  border: 1px solid var(--gray-200);
+}
+
+.financial-block-title {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+
+.financial-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+}
+
+.financial-row.success { color: var(--success); }
+.financial-row.danger { color: var(--danger); font-weight: 700; }
+
+/* ============ الملاحظات والمتأخرات الأخرى ============ */
+
+/* خلية الملاحظات في الجدول التفصيلي */
+.notes-cell {
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.notes-cell:hover {
+  background: rgba(255, 193, 7, 0.15);
+}
+
+.notes-text {
+  color: var(--gray-700);
+  font-weight: 500;
+}
+
+.notes-amount {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.notes-empty {
+  cursor: pointer;
+  color: var(--gray-400);
+  font-size: 11px;
+  font-style: italic;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px dashed var(--gray-300);
+  display: inline-block;
+  transition: var(--transition);
+}
+
+.notes-empty:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(30, 58, 95, 0.05);
+}
+
+/* بطاقة مجموع المتأخرات (بارزة) */
+.total-overdue-block {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #dc2626 !important;
+  position: relative;
+}
+
+.total-overdue-block .financial-block-title {
+  color: #991b1b;
+  border-bottom-color: #fca5a5;
+  font-size: 14px;
+}
+
+.total-overdue-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: #991b1b;
+  text-align: center;
+  padding: 10px 0;
+  background: #fff;
+  border-radius: var(--radius);
+  margin: 8px 0;
+  border: 1px solid #fecaca;
+}
+
+.overdue-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.7);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #7f1d1d;
+}
+
+.breakdown-row strong {
+  color: #991b1b;
+}
+
+.breakdown-detail {
+  font-size: 11px;
+  color: var(--gray-600);
+  padding: 0 12px 4px;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .summary-card-meta {
+    gap: 8px;
+    font-size: 11px;
+  }
+  .summary-card-title .apt-name {
+    font-size: 14px;
+  }
+}
+</style>
 </head>
 <body>
-    <div class="card">
-        <i class="fas fa-screwdriver-wrench"></i>
-        <h2>وحدة إدارة الشقق</h2>
-        <p>قيد البناء في الخطوة التالية (المرحلة 3-ب): العقود، الدفعات، الملخّص الشهري،
-        وسحب مبلغ الكهرباء تلقائياً من القاعدة الموحّدة.</p>
+
+
+  <!-- شريط تحميل علوي -->
+  <div id="topLoader" class="top-loader" style="display:none">
+    <div class="top-loader-bar"></div>
+  </div>
+
+  <!-- شاشة التحميل الأولية (تختفي بسرعة) -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p>جاري تحميل النظام...</p>
+  </div>
+
+  <!-- الهيدر -->
+  <header class="app-header">
+    <div class="header-content">
+      <h1>🏢 نظام إدارة الشقق</h1>
+      <button class="btn-icon" id="refreshBtn" title="تحديث البيانات">
+        <span>🔄</span>
+      </button>
     </div>
+  </header>
+
+  <!-- التابات -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-text">لوحة التحكم</span>
+    </button>
+    <button class="tab-btn" data-tab="table">
+      <span class="tab-icon">📋</span>
+      <span class="tab-text">الجدول</span>
+    </button>
+    <button class="tab-btn" data-tab="info">
+      <span class="tab-icon">📊</span>
+      <span class="tab-text">معلومات الشقق</span>
+    </button>
+    <button class="tab-btn" data-tab="summary">
+      <span class="tab-icon">📈</span>
+      <span class="tab-text">ملخص العقود</span>
+    </button>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- ============ تاب لوحة التحكم ============ -->
+    <section id="tab-dashboard" class="tab-content active">
+      <div class="section-header">
+        <h2>إدارة الشقق</h2>
+        <button class="btn btn-primary" id="addApartmentBtn">
+          <span>+</span> إضافة شقة جديدة
+        </button>
+      </div>
+
+      <div class="apartments-list" id="apartmentsList">
+        <!-- يتم ملؤها ديناميكياً -->
+      </div>
+
+      <div class="empty-state" id="emptyApartments" style="display:none">
+        <div class="empty-icon">🏠</div>
+        <p>لا توجد شقق مضافة بعد</p>
+        <button class="btn btn-primary" onclick="openApartmentModal()">إضافة أول شقة</button>
+      </div>
+    </section>
+
+    <!-- ============ تاب الجدول ============ -->
+    <section id="tab-table" class="tab-content">
+      <div class="section-header">
+        <h2>جدول المتابعة الشهرية</h2>
+        <div class="filter-group">
+          <label>اختر الشهر:</label>
+          <input type="month" id="tableMonthFilter" class="month-input">
+        </div>
+      </div>
+
+      <!-- شريط التعديل الجماعي -->
+      <div id="bulkActionsBar" class="bulk-actions-bar" style="display:none">
+        <div class="bulk-actions-info">
+          <span id="bulkSelectedCount">0</span> شقة محددة
+        </div>
+        <div class="bulk-actions-controls">
+          <select id="bulkRentStatus" class="bulk-select">
+            <option value="">-- حالة الإيجار --</option>
+            <option value="paid">تم السداد</option>
+            <option value="unpaid">لم يتم السداد</option>
+            <option value="pending">لم يحن الاستحقاق</option>
+            <option value="none">لا يوجد</option>
+          </select>
+          <select id="bulkUtilitiesStatus" class="bulk-select">
+            <option value="">-- حالة الكهرباء --</option>
+            <option value="paid">تم السداد</option>
+            <option value="unpaid">لم يتم السداد</option>
+            <option value="none">لا يوجد</option>
+          </select>
+          <button class="btn btn-primary btn-small" onclick="applyBulkUpdate()">
+            ✓ تطبيق
+          </button>
+          <button class="btn btn-secondary btn-small" onclick="clearBulkSelection()">
+            ✕ إلغاء التحديد
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table" id="dataTable">
+          <thead>
+            <tr>
+              <th style="width:40px"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" title="تحديد الكل"></th>
+              <th>رقم العقد</th>
+              <th>اسم الشقة</th>
+              <th>الإيجار</th>
+              <th>الكهرباء والماء</th>
+              <th>حالة الدفع</th>
+              <th>تاريخ الدفع</th>
+              <th>مدة العقد</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody">
+            <!-- يتم ملؤها ديناميكياً -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" id="emptyTable" style="display:none">
+        <div class="empty-icon">📋</div>
+        <p>لا توجد شقق - أضف شقة من لوحة التحكم</p>
+      </div>
+    </section>
+
+    <!-- ============ تاب معلومات الشقق ============ -->
+    <section id="tab-info" class="tab-content">
+      <div class="section-header">
+        <h2>معلومات الشقق</h2>
+        <div class="filter-group">
+          <label>اختر الشهر:</label>
+          <input type="month" id="infoMonthFilter" class="month-input">
+        </div>
+      </div>
+
+      <div class="cards-grid" id="cardsGrid">
+        <!-- يتم ملؤها ديناميكياً -->
+      </div>
+
+      <div class="empty-state" id="emptyInfo" style="display:none">
+        <div class="empty-icon">📊</div>
+        <p>لا توجد شقق - أضف شقة من لوحة التحكم</p>
+      </div>
+    </section>
+
+    <!-- ============ تاب ملخص العقود ============ -->
+    <section id="tab-summary" class="tab-content">
+      <div class="section-header">
+        <h2>📈 ملخص العقود الشامل</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-small" onclick="expandAllSummary()" title="توسيع كل البطاقات">
+            ▼ توسيع الكل
+          </button>
+          <button class="btn btn-secondary btn-small" onclick="collapseAllSummary()" title="طي كل البطاقات">
+            ▲ طي الكل
+          </button>
+          <button class="btn btn-secondary btn-small" onclick="loadSummaryData(true)">
+            🔄 تحديث
+          </button>
+        </div>
+      </div>
+
+      <!-- بطاقات إحصائية في الأعلى -->
+      <div class="summary-stats-grid" id="summaryStatsGrid">
+        <!-- يتم ملؤها ديناميكياً -->
+      </div>
+
+      <!-- شريط الفلاتر -->
+      <div class="summary-filters-bar">
+        <div class="summary-filter-tabs" id="summaryFilterTabs">
+          <button class="summary-filter-btn active" data-filter="all">
+            <span>الكل</span>
+            <span class="filter-count" id="countAll">0</span>
+          </button>
+          <button class="summary-filter-btn" data-filter="overdue">
+            <span>⚠️ فيها متأخرات</span>
+            <span class="filter-count" id="countOverdue">0</span>
+          </button>
+          <button class="summary-filter-btn" data-filter="fullyPaid">
+            <span>💰 مسددة بالكامل</span>
+            <span class="filter-count" id="countFullyPaid">0</span>
+          </button>
+          <button class="summary-filter-btn" data-filter="endingSoon">
+            <span>📅 العقد منتهي قريباً</span>
+            <span class="filter-count" id="countEndingSoon">0</span>
+          </button>
+        </div>
+        <div class="summary-search">
+          <input type="text" id="summarySearch" placeholder="🔍 بحث: رقم العقد / اسم الشقة / المستأجر">
+        </div>
+      </div>
+
+      <!-- قائمة الشقق -->
+      <div class="summary-cards-list" id="summaryCardsList">
+        <!-- يتم ملؤها ديناميكياً -->
+      </div>
+
+      <div class="empty-state" id="emptySummary" style="display:none">
+        <div class="empty-icon">📈</div>
+        <p>لا توجد شقق لعرضها</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ Modal إضافة/تعديل شقة ============ -->
+  <div class="modal-overlay" id="apartmentModal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">إضافة شقة جديدة</h3>
+        <button class="modal-close" onclick="closeApartmentModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="apartmentForm" onsubmit="return false">
+          <input type="hidden" id="apartmentId">
+
+          <div class="form-group">
+            <label>رقم العقد <span class="required">*</span></label>
+            <input type="text" id="contractNumber" required placeholder="مثال: 2026-001">
+          </div>
+
+          <div class="form-group">
+            <label>اسم الشقة <span class="required">*</span></label>
+            <input type="text" id="apartmentName" required placeholder="مثال: شقة الدور الأول">
+          </div>
+
+          <div class="form-group">
+            <label>اسم المستأجر <span class="required">*</span></label>
+            <input type="text" id="tenantName" required placeholder="الاسم الكامل">
+          </div>
+
+          <div class="form-group">
+            <label>الكهرباء والماء والصرف الصحي</label>
+            <input type="text" id="utilities" placeholder="رقم العداد أو ملاحظة">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>تاريخ بداية العقد <span class="required">*</span></label>
+              <input type="date" id="startDate" required>
+            </div>
+            <div class="form-group">
+              <label>تاريخ نهاية العقد <span class="required">*</span></label>
+              <input type="date" id="endDate" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>مبلغ الإيجار الكامل (ريال) <span class="required">*</span></label>
+              <input type="number" id="totalRent" required min="0" step="0.01" placeholder="60000">
+            </div>
+            <div class="form-group">
+              <label>عدد الدفعات <span class="required">*</span></label>
+              <select id="paymentsCount" required>
+                <option value="">اختر</option>
+                <option value="1">دفعة واحدة</option>
+                <option value="2">دفعتان</option>
+                <option value="3">3 دفعات</option>
+                <option value="4">4 دفعات</option>
+                <option value="6">6 دفعات</option>
+                <option value="12">12 دفعة</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="fullyPaid" onchange="toggleFullyPaid()">
+              <span>💰 الإيجار مدفوع بالكامل مسبقاً</span>
+            </label>
+            <div style="font-size:11px;color:var(--gray-500);margin-top:4px;padding-right:24px">
+              عند تفعيله، الإيجار يظهر "تم السداد" في كل أشهر العقد تلقائياً
+            </div>
+          </div>
+
+          <div class="form-group" id="paymentsContainer" style="display:none">
+            <label>مبالغ الدفعات</label>
+            <div id="paymentsInputs" class="payments-inputs"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn-small btn-secondary" onclick="distributePayments()">
+                🔄 توزيع تلقائي
+              </button>
+              <button type="button" class="btn btn-small btn-secondary" onclick="openScheduleModal()" style="background:#dbeafe;color:#1e40af">
+                📅 تعديل جدولة الدفعات
+              </button>
+            </div>
+            <div id="scheduleStatus" style="font-size:11px;color:var(--gray-500);margin-top:6px"></div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              كود الشقة في نظام الفواتير
+              <span style="font-size:11px;color:var(--gray-500);font-weight:400">(اختياري - لربط مبلغ الكهرباء والماء تلقائياً)</span>
+            </label>
+            <div style="display:flex;gap:6px">
+              <select id="externalCode" style="flex:1">
+                <option value="">— لا يوجد ربط —</option>
+              </select>
+              <button type="button" class="btn btn-small btn-secondary" onclick="loadBillingCodes()" title="جلب الأكواد من نظام الفواتير">
+                🔄
+              </button>
+            </div>
+            <div id="externalCodeStatus" style="font-size:11px;color:var(--gray-500);margin-top:4px"></div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeApartmentModal()">إلغاء</button>
+            <button type="button" class="btn btn-primary" onclick="saveApartment()">حفظ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Modal تعديل بيانات الشهر ============ -->
+  <div class="modal-overlay" id="monthlyModal" style="display:none">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h3>تعديل بيانات الشهر</h3>
+        <button class="modal-close" onclick="closeMonthlyModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="monthlyApartmentId">
+        <input type="hidden" id="monthlyMonth">
+
+        <div class="form-group">
+          <label>اسم الشقة</label>
+          <input type="text" id="monthlyApartmentName" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>الشهر</label>
+          <input type="text" id="monthlyMonthDisplay" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>حالة الإيجار</label>
+          <select id="monthlyRentStatus" class="status-select" onchange="onRentStatusChange()">
+            <option value="">-- اختر --</option>
+            <option value="paid">تم السداد</option>
+            <option value="unpaid">لم يتم السداد</option>
+            <option value="pending">لم يحن موعد الاستحقاق</option>
+            <option value="none">لا يوجد</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>مبلغ الإيجار للشهر (ريال)</label>
+          <input type="number" id="monthlyRentAmount" min="0" step="0.01" placeholder="0">
+        </div>
+
+        <div class="form-group">
+          <label>حالة الكهرباء والماء</label>
+          <select id="monthlyUtilitiesStatus" class="status-select">
+            <option value="">-- اختر --</option>
+            <option value="paid">تم السداد</option>
+            <option value="unpaid">لم يتم السداد</option>
+            <option value="none">لا يوجد</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>
+            مبلغ الكهرباء والماء (ريال)
+            <span id="billingLinkBadge" style="display:none;font-size:11px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;margin-right:6px">🔗 مربوط</span>
+          </label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" id="monthlyUtilitiesAmount" min="0" step="0.01" placeholder="0" style="flex:1">
+            <button type="button" id="fetchBillingBtn" class="btn btn-small btn-secondary" onclick="fetchBillingForMonth()" style="display:none;white-space:nowrap" title="جلب المبلغ من نظام الفواتير">
+              🔄 جلب
+            </button>
+          </div>
+          <div id="billingFetchStatus" style="font-size:11px;color:var(--gray-500);margin-top:4px"></div>
+        </div>
+
+        <div class="form-group">
+          <label>طريقة الدفع</label>
+          <select id="monthlyPaymentMethod">
+            <option value="">-- اختر --</option>
+            <option value="manual">يدوي</option>
+            <option value="transfer">تحويل</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="paymentDateGroup" style="display:none">
+          <label>تاريخ الدفع</label>
+          <input type="date" id="monthlyPaymentDate">
+        </div>
+
+        <div class="form-group">
+          <label>📝 ملاحظات (اختياري)</label>
+          <textarea id="monthlyNotes" rows="2" placeholder="مثال: دفع جزء فقط، وعد بدفع الباقي 25/8" style="resize:vertical"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>💵 مبلغ متأخر (اختياري)
+            <span style="font-size:11px;color:var(--gray-500);font-weight:400">- يُضاف إلى مجموع المتأخرات</span>
+          </label>
+          <input type="number" id="monthlyOtherOverdue" min="0" step="0.01" placeholder="0">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeMonthlyModal()">إلغاء</button>
+          <button type="button" class="btn btn-primary" onclick="saveMonthlyDataAction()">حفظ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tooltip للمستأجر -->
+  <div id="tenantTooltip" class="tenant-tooltip"></div>
+
+  <!-- ============ Modal جدولة الدفعات ============ -->
+  <div class="modal-overlay" id="scheduleModal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📅 تعديل جدولة الدفعات</h3>
+        <button class="modal-close" onclick="closeScheduleModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#dbeafe;color:#1e40af;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px">
+          💡 حدد فترة الاستحقاق لكل دفعة. المبلغ سيظهر في كل شهر يقع ضمن فترتها.
+        </div>
+
+        <div id="scheduleInputs"></div>
+
+        <div id="scheduleWarning" style="display:none;background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:12px;margin-top:10px"></div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="redistributeSchedule()" style="background:#dbeafe;color:#1e40af">
+            🔄 إعادة توزيع تلقائي
+          </button>
+          <div style="flex:1"></div>
+          <button type="button" class="btn btn-secondary" onclick="closeScheduleModal()">إلغاء</button>
+          <button type="button" class="btn btn-primary" onclick="saveSchedule()">حفظ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  
+
+<!-- طبقة البيانات: Supabase بدل Google Apps Script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/apartments-api.js"></script>
+<!-- واجهة النظام الأصلية كما هي -->
+<script>
+// ============ المتغيرات العامة ============
+var apartments = [];
+var currentMonth = '';
+var monthlyDataCache = {};
+var allMonthlyData = {}; // كل بيانات الأشهر لكل شقة: {apartmentId: {month: data}}
+var paidCountsCache = {};
+var isLoading = false;
+var initialLoadDone = false;
+var currentSchedule = []; // جدولة الدفعات للشقة الجاري إضافتها/تعديلها
+var selectedApartments = {}; // {apartmentId: true} للشقق المحددة في الجدول
+
+// ============ التهيئة ============
+document.addEventListener('DOMContentLoaded', function() {
+  initializeApp();
+});
+
+function initializeApp() {
+  // تعيين الشهر الحالي افتراضياً
+  var now = new Date();
+  currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  document.getElementById('tableMonthFilter').value = currentMonth;
+  document.getElementById('infoMonthFilter').value = currentMonth;
+
+  setupEventListeners();
+
+  // إخفاء شاشة التحميل بعد ثانية واحدة بحد أقصى - الواجهة تظهر فوراً
+  setTimeout(function() {
+    hideLoadingScreen();
+  }, 800);
+
+  // محاولة تحميل البيانات (في الخلفية - إذا فشلت لا تعلق الواجهة)
+  loadInitialData();
+
+  // أمان إضافي: إذا ما خلصت في 15 ثانية، اخفي الشاشة عنوة
+  setTimeout(function() {
+    hideLoadingScreen();
+    if (!initialLoadDone) {
+      showToast('تأخر تحميل البيانات - يمكنك المحاولة مرة أخرى من زر التحديث', 'warning');
+      renderApartmentsList();
+      renderTable();
+      renderInfoCards();
+    }
+  }, 15000);
+}
+
+function setupEventListeners() {
+  // التابات
+  var tabs = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener('click', function() {
+      switchTab(this.getAttribute('data-tab'));
+    });
+  }
+
+  setupSummaryListeners();
+  document.getElementById('addApartmentBtn').addEventListener('click', openApartmentModal);
+
+  document.getElementById('refreshBtn').addEventListener('click', function() {
+    loadInitialData();
+    showToast('جاري التحديث...', 'success');
+  });
+
+  document.getElementById('tableMonthFilter').addEventListener('change', function() {
+    currentMonth = this.value;
+    document.getElementById('infoMonthFilter').value = currentMonth;
+    selectedApartments = {}; // مسح التحديد عند تغيير الشهر
+    loadMonthlyDataAndRender();
+  });
+
+  document.getElementById('infoMonthFilter').addEventListener('change', function() {
+    currentMonth = this.value;
+    document.getElementById('tableMonthFilter').value = currentMonth;
+    selectedApartments = {}; // مسح التحديد عند تغيير الشهر
+    loadMonthlyDataAndRender();
+  });
+
+  document.getElementById('paymentsCount').addEventListener('change', function() {
+    var newCount = parseInt(this.value) || 0;
+
+    // إذا الجدولة موجودة، نبه المستخدم
+    if (currentSchedule && currentSchedule.length > 0 && currentSchedule.length !== newCount) {
+      if (!confirm('تغيير عدد الدفعات سيعيد توزيع الجدولة، هل تريد المتابعة؟')) {
+        // ارجاع القيمة
+        this.value = currentSchedule.length;
+        return;
+      }
+      currentSchedule = []; // مسح الجدولة لإعادة التوزيع
+      updateScheduleStatus();
+    }
+
+    renderPaymentsInputs(newCount);
+  });
+
+  document.getElementById('monthlyPaymentMethod').addEventListener('change', function() {
+    var dateGroup = document.getElementById('paymentDateGroup');
+    if (this.value === 'manual' || this.value === 'transfer') {
+      dateGroup.style.display = 'block';
+    } else {
+      dateGroup.style.display = 'none';
+    }
+  });
+
+  document.getElementById('apartmentModal').addEventListener('click', function(e) {
+    if (e.target === this) closeApartmentModal();
+  });
+
+  document.getElementById('monthlyModal').addEventListener('click', function(e) {
+    if (e.target === this) closeMonthlyModal();
+  });
+
+  var scheduleModal = document.getElementById('scheduleModal');
+  if (scheduleModal) {
+    scheduleModal.addEventListener('click', function(e) {
+      if (e.target === this) closeScheduleModal();
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('apartment-name-cell')) {
+      hideTenantTooltip();
+    }
+  });
+}
+
+// ============ التابات ============
+function switchTab(tabName) {
+  var tabs = document.querySelectorAll('.tab-btn');
+  var contents = document.querySelectorAll('.tab-content');
+
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.remove('active');
+  }
+  for (var j = 0; j < contents.length; j++) {
+    contents[j].classList.remove('active');
+  }
+
+  document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+
+  // إعادة الرسم من الـ cache المحلي عند الانتقال
+  if (tabName === 'dashboard') {
+    renderApartmentsList();
+  } else if (tabName === 'table') {
+    renderTable();
+  } else if (tabName === 'info') {
+    renderInfoCards();
+  } else if (tabName === 'summary') {
+    loadSummaryData(false);
+  }
+}
+
+// ============ تحميل البيانات الأولية (سريع - request واحد) ============
+function loadInitialData() {
+  showTopLoader(true);
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      hideLoadingScreen();
+      initialLoadDone = true;
+
+      if (result && result.success) {
+        apartments = result.apartments || [];
+        monthlyDataCache[currentMonth] = result.monthData || {};
+        paidCountsCache = result.paidCounts || {};
+        allMonthlyData = result.allMonthlyData || {};
+
+        renderApartmentsList();
+        renderTable();
+        renderInfoCards();
+      } else {
+        showToast('خطأ في تحميل البيانات: ' + (result ? result.message : ''), 'error');
+        renderApartmentsList();
+        renderTable();
+        renderInfoCards();
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      hideLoadingScreen();
+      initialLoadDone = true;
+      showToast('فشل الاتصال: ' + (err.message || err), 'error');
+      renderApartmentsList();
+      renderTable();
+      renderInfoCards();
+    })
+    .getInitialData(currentMonth);
+}
+
+function loadMonthlyDataAndRender() {
+  if (!currentMonth) return;
+
+  showTopLoader(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result && result.success) {
+        // دمج البيانات الجديدة مع الـ cache بدلاً من استبدالها كلياً
+        // لتجنب فقدان البيانات في حالة تأخر مزامنة الشيت
+        var newData = result.data || {};
+
+        // إذا الخادم رجع بيانات جديدة، نستبدل
+        // إذا رجع فاضي والـ cache فيه بيانات، نحتفظ بالـ cache
+        if (Object.keys(newData).length > 0) {
+          monthlyDataCache[currentMonth] = newData;
+        } else if (!monthlyDataCache[currentMonth] || Object.keys(monthlyDataCache[currentMonth]).length === 0) {
+          monthlyDataCache[currentMonth] = newData;
+        }
+
+        if (result.paidCounts && Object.keys(result.paidCounts).length > 0) {
+          paidCountsCache = result.paidCounts;
+        }
+        if (result.allMonthlyData && Object.keys(result.allMonthlyData).length > 0) {
+          allMonthlyData = result.allMonthlyData;
+        }
+        renderTable();
+        renderInfoCards();
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + err.message, 'error');
+    })
+    .getMonthlyData(currentMonth);
+}
+
+// ============ عرض قائمة الشقق - لوحة التحكم ============
+function renderApartmentsList() {
+  var container = document.getElementById('apartmentsList');
+  var emptyState = document.getElementById('emptyApartments');
+
+  if (!apartments || apartments.length === 0) {
+    container.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  var html = '';
+
+  for (var i = 0; i < apartments.length; i++) {
+    var apt = apartments[i];
+    var days = calculateContractDays(apt.endDate);
+    var daysClass = getDaysClass(days);
+    var daysText = formatDaysText(days);
+
+    html += '<div class="apartment-card' + (apt.fullyPaid ? ' fully-paid' : '') + '" data-apt-id="' + apt.id + '">' +
+      '<div class="apartment-card-header">' +
+        '<div class="apartment-card-title">' +
+          '<span class="drag-handle" title="اسحب لإعادة الترتيب">⋮⋮</span>' +
+          (apt.contractNumber ? '<span class="contract-badge">عقد: ' + escapeHtml(apt.contractNumber) + '</span>' : '') +
+          ' ' + escapeHtml(apt.apartmentName) +
+          (apt.fullyPaid ? ' <span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">💰 مدفوع</span>' : '') +
+        '</div>' +
+        '<div class="apartment-card-actions">' +
+          '<button class="icon-btn" onclick="editApartment(\'' + apt.id + '\')" title="تعديل">✏️</button>' +
+          '<button class="icon-btn delete" onclick="confirmDeleteApartment(\'' + apt.id + '\')" title="حذف">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="apartment-card-info">' +
+        '<div class="info-row"><span class="info-label">المستأجر:</span><span class="info-value">' + escapeHtml(apt.tenantName) + '</span></div>' +
+        '<div class="info-row"><span class="info-label">الإيجار الكامل:</span><span class="info-value">' + formatNumber(apt.totalRent) + ' ر.س</span></div>' +
+        (!apt.fullyPaid ? '<div class="info-row"><span class="info-label">عدد الدفعات:</span><span class="info-value">' + apt.paymentsCount + '</span></div>' : '') +
+        '<div class="info-row"><span class="info-label">بداية العقد:</span><span class="info-value">' + apt.startDate + '</span></div>' +
+        '<div class="info-row"><span class="info-label">نهاية العقد:</span><span class="info-value">' + apt.endDate + '</span></div>' +
+        (apt.externalCode ? '<div class="info-row"><span class="info-label">كود الفواتير:</span><span class="info-value" style="font-family:monospace;font-size:12px">' + escapeHtml(apt.externalCode) + '</span></div>' : '') +
+        '<div class="info-row"><span class="info-label">المتبقي:</span><span class="info-value"><span class="contract-days ' + daysClass + '">' + daysText + '</span></span></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  container.innerHTML = html;
+
+  // تفعيل السحب والإفلات
+  enableDragAndDrop('apartmentsList', '.apartment-card', 'data-apt-id');
+}
+
+// ============ Modal إضافة/تعديل شقة ============
+function openApartmentModal() {
+  document.getElementById('modalTitle').textContent = 'إضافة شقة جديدة';
+  document.getElementById('apartmentForm').reset();
+  document.getElementById('apartmentId').value = '';
+  document.getElementById('paymentsContainer').style.display = 'none';
+  document.getElementById('paymentsInputs').innerHTML = '';
+  document.getElementById('fullyPaid').checked = false;
+  document.getElementById('externalCodeStatus').textContent = '';
+  document.getElementById('scheduleStatus').textContent = '';
+
+  // تخزين الجدولة الحالية (تتولد عند الحفظ تلقائياً)
+  currentSchedule = [];
+
+  toggleFullyPaid();
+
+  // تحميل قائمة الأكواد المتاحة (في الخلفية)
+  loadBillingCodes(true);
+
+  document.getElementById('apartmentModal').style.display = 'flex';
+}
+
+function closeApartmentModal() {
+  document.getElementById('apartmentModal').style.display = 'none';
+}
+
+function editApartment(id) {
+  var apt = findApartmentById(id);
+  if (!apt) return;
+
+  document.getElementById('modalTitle').textContent = 'تعديل بيانات الشقة';
+  document.getElementById('apartmentId').value = apt.id;
+  document.getElementById('contractNumber').value = apt.contractNumber || '';
+  document.getElementById('apartmentName').value = apt.apartmentName || '';
+  document.getElementById('tenantName').value = apt.tenantName || '';
+  document.getElementById('utilities').value = apt.utilities || '';
+  document.getElementById('startDate').value = apt.startDate || '';
+  document.getElementById('endDate').value = apt.endDate || '';
+  document.getElementById('totalRent').value = apt.totalRent || '';
+  document.getElementById('paymentsCount').value = apt.paymentsCount || '';
+  document.getElementById('fullyPaid').checked = apt.fullyPaid === true;
+  document.getElementById('externalCodeStatus').textContent = '';
+
+  // تحميل الجدولة المحفوظة
+  currentSchedule = (apt.paymentSchedule && apt.paymentSchedule.length > 0)
+    ? apt.paymentSchedule.slice()
+    : [];
+
+  if (apt.paymentsCount) {
+    renderPaymentsInputs(apt.paymentsCount, apt.payments);
+  }
+
+  updateScheduleStatus();
+  toggleFullyPaid();
+
+  // تحميل قائمة الأكواد ثم اختيار الكود المحفوظ
+  loadBillingCodes(true, apt.externalCode);
+
+  document.getElementById('apartmentModal').style.display = 'flex';
+}
+
+/**
+ * إظهار/إخفاء حقول الدفعات حسب checkbox "مدفوع بالكامل"
+ */
+function toggleFullyPaid() {
+  var isFullyPaid = document.getElementById('fullyPaid').checked;
+  var paymentsCountWrapper = document.getElementById('paymentsCount').parentElement;
+  var paymentsContainer = document.getElementById('paymentsContainer');
+
+  if (isFullyPaid) {
+    if (paymentsCountWrapper) paymentsCountWrapper.style.display = 'none';
+    if (paymentsContainer) paymentsContainer.style.display = 'none';
+    // إعفاء paymentsCount من الإلزامية
+    document.getElementById('paymentsCount').removeAttribute('required');
+  } else {
+    if (paymentsCountWrapper) paymentsCountWrapper.style.display = '';
+    document.getElementById('paymentsCount').setAttribute('required', 'required');
+    // إعادة عرض الدفعات إن كانت موجودة
+    var count = parseInt(document.getElementById('paymentsCount').value) || 0;
+    if (count > 0) {
+      paymentsContainer.style.display = 'block';
+    }
+  }
+}
+
+/**
+ * تحديث رسالة حالة الجدولة
+ */
+function updateScheduleStatus() {
+  var statusEl = document.getElementById('scheduleStatus');
+  if (!statusEl) return;
+
+  if (currentSchedule && currentSchedule.length > 0) {
+    statusEl.innerHTML = '📅 <strong>الجدولة محددة:</strong> ' + currentSchedule.length + ' فترة';
+    statusEl.style.color = '#16a34a';
+  } else {
+    statusEl.innerHTML = '⚙️ سيتم التوزيع تلقائياً عند الحفظ (يمكنك التعديل من زر "تعديل جدولة الدفعات")';
+    statusEl.style.color = 'var(--gray-500)';
+  }
+}
+
+function renderPaymentsInputs(count, existingPayments) {
+  var container = document.getElementById('paymentsContainer');
+  var inputs = document.getElementById('paymentsInputs');
+
+  if (!count || count <= 0) {
+    container.style.display = 'none';
+    inputs.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'block';
+  var html = '';
+  for (var i = 0; i < count; i++) {
+    var value = '';
+    if (existingPayments && existingPayments[i] !== undefined) {
+      value = existingPayments[i];
+    }
+    html += '<div class="payment-input-wrapper">' +
+      '<label>الدفعة ' + (i + 1) + '</label>' +
+      '<input type="number" class="payment-amount" min="0" step="0.01" placeholder="0" value="' + value + '">' +
+      '</div>';
+  }
+  inputs.innerHTML = html;
+}
+
+function distributePayments() {
+  var totalRent = parseFloat(document.getElementById('totalRent').value) || 0;
+  var count = parseInt(document.getElementById('paymentsCount').value) || 0;
+
+  if (totalRent <= 0 || count <= 0) {
+    showToast('أدخل مبلغ الإيجار وعدد الدفعات أولاً', 'warning');
+    return;
+  }
+
+  var amount = (totalRent / count).toFixed(2);
+  var inputs = document.querySelectorAll('.payment-amount');
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].value = amount;
+  }
+  showToast('تم التوزيع التلقائي', 'success');
+}
+
+// ============ جدولة الدفعات ============
+
+/**
+ * توليد جدولة تلقائية للدفعات بناءً على فترة العقد
+ * يقسّم فترة العقد على عدد الدفعات بالتساوي
+ */
+function generateAutoSchedule(startDate, endDate, count, amounts) {
+  if (!startDate || !endDate || !count || count <= 0) return [];
+
+  var start = new Date(startDate);
+  var end = new Date(endDate);
+
+  // عدد الأيام الكلي
+  var totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  if (totalDays <= 0) return [];
+
+  // أيام لكل دفعة
+  var daysPerPayment = Math.floor(totalDays / count);
+
+  var schedule = [];
+  for (var i = 0; i < count; i++) {
+    var from = new Date(start);
+    from.setDate(from.getDate() + (i * daysPerPayment));
+
+    var to;
+    if (i === count - 1) {
+      // آخر دفعة تنتهي بنهاية العقد بالضبط
+      to = new Date(end);
+    } else {
+      to = new Date(start);
+      to.setDate(to.getDate() + ((i + 1) * daysPerPayment) - 1);
+    }
+
+    schedule.push({
+      from: dateToStr(from),
+      to: dateToStr(to),
+      amount: (amounts && amounts[i] !== undefined) ? amounts[i] : 0
+    });
+  }
+
+  return schedule;
+}
+
+function dateToStr(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+/**
+ * فتح modal تعديل جدولة الدفعات
+ */
+function openScheduleModal() {
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+  var paymentsCount = parseInt(document.getElementById('paymentsCount').value) || 0;
+
+  if (!startDate || !endDate) {
+    showToast('حدد تاريخ بداية ونهاية العقد أولاً', 'warning');
+    return;
+  }
+  if (paymentsCount <= 0) {
+    showToast('حدد عدد الدفعات أولاً', 'warning');
+    return;
+  }
+
+  // قراءة المبالغ الحالية
+  var amounts = [];
+  var inputs = document.querySelectorAll('.payment-amount');
+  for (var i = 0; i < inputs.length; i++) {
+    amounts.push(parseFloat(inputs[i].value) || 0);
+  }
+
+  // إذا الجدولة فاضية، ولدها تلقائياً
+  if (!currentSchedule || currentSchedule.length !== paymentsCount) {
+    currentSchedule = generateAutoSchedule(startDate, endDate, paymentsCount, amounts);
+  } else {
+    // تحديث المبالغ من الـ inputs
+    for (var j = 0; j < currentSchedule.length; j++) {
+      if (amounts[j] !== undefined) {
+        currentSchedule[j].amount = amounts[j];
+      }
+    }
+  }
+
+  renderScheduleInputs();
+  document.getElementById('scheduleModal').style.display = 'flex';
+}
+
+function closeScheduleModal() {
+  document.getElementById('scheduleModal').style.display = 'none';
+}
+
+function renderScheduleInputs() {
+  var container = document.getElementById('scheduleInputs');
+  if (!container) return;
+
+  var html = '';
+  for (var i = 0; i < currentSchedule.length; i++) {
+    var s = currentSchedule[i];
+    html += '<div class="schedule-row">' +
+      '<div class="schedule-row-header">الدفعة ' + (i + 1) + '</div>' +
+      '<div class="schedule-row-grid">' +
+        '<div><label>المبلغ (ر.س)</label>' +
+          '<input type="number" min="0" step="0.01" class="schedule-amount" data-idx="' + i + '" value="' + (s.amount || 0) + '">' +
+        '</div>' +
+        '<div><label>من</label>' +
+          '<input type="date" class="schedule-from" data-idx="' + i + '" value="' + (s.from || '') + '">' +
+        '</div>' +
+        '<div><label>إلى</label>' +
+          '<input type="date" class="schedule-to" data-idx="' + i + '" value="' + (s.to || '') + '">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function redistributeSchedule() {
+  if (!confirm('سيتم إعادة توزيع الفترات تلقائياً بناءً على فترة العقد. هل تريد المتابعة؟')) return;
+
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+  var totalRent = parseFloat(document.getElementById('totalRent').value) || 0;
+  var count = currentSchedule.length;
+
+  // المبالغ من الـ inputs الحالية في modal
+  var amounts = [];
+  var amountInputs = document.querySelectorAll('.schedule-amount');
+  for (var i = 0; i < amountInputs.length; i++) {
+    amounts.push(parseFloat(amountInputs[i].value) || 0);
+  }
+
+  // لو ما فيه مبالغ، وزع المبلغ الكلي
+  var hasAmounts = false;
+  for (var k = 0; k < amounts.length; k++) {
+    if (amounts[k] > 0) { hasAmounts = true; break; }
+  }
+  if (!hasAmounts && totalRent > 0 && count > 0) {
+    var per = parseFloat((totalRent / count).toFixed(2));
+    for (var j = 0; j < count; j++) amounts[j] = per;
+  }
+
+  currentSchedule = generateAutoSchedule(startDate, endDate, count, amounts);
+  renderScheduleInputs();
+  showToast('تم إعادة التوزيع تلقائياً', 'success');
+}
+
+function saveSchedule() {
+  // قراءة القيم من الـ inputs
+  var amounts = document.querySelectorAll('.schedule-amount');
+  var froms = document.querySelectorAll('.schedule-from');
+  var tos = document.querySelectorAll('.schedule-to');
+
+  var newSchedule = [];
+  for (var i = 0; i < amounts.length; i++) {
+    newSchedule.push({
+      amount: parseFloat(amounts[i].value) || 0,
+      from: froms[i].value || '',
+      to: tos[i].value || ''
+    });
+  }
+
+  // التحقق من صحة الفترات
+  var warningEl = document.getElementById('scheduleWarning');
+  var warnings = [];
+
+  for (var j = 0; j < newSchedule.length; j++) {
+    var s = newSchedule[j];
+    if (!s.from || !s.to) {
+      warnings.push('الدفعة ' + (j + 1) + ': الفترات مطلوبة');
+    } else if (new Date(s.to) < new Date(s.from)) {
+      warnings.push('الدفعة ' + (j + 1) + ': تاريخ "إلى" يجب أن يكون بعد "من"');
+    }
+
+    // فحص التداخل مع الفترة التالية
+    if (j < newSchedule.length - 1) {
+      var next = newSchedule[j + 1];
+      if (s.to && next.from && new Date(s.to) >= new Date(next.from)) {
+        warnings.push('تداخل بين الدفعة ' + (j + 1) + ' والدفعة ' + (j + 2));
+      }
+    }
+  }
+
+  if (warnings.length > 0) {
+    warningEl.innerHTML = '⚠️ ' + warnings.join('<br>');
+    warningEl.style.display = 'block';
+    return;
+  }
+
+  warningEl.style.display = 'none';
+  currentSchedule = newSchedule;
+
+  // تحديث مبالغ الدفعات في النموذج الرئيسي
+  var paymentInputs = document.querySelectorAll('.payment-amount');
+  for (var k = 0; k < paymentInputs.length && k < newSchedule.length; k++) {
+    paymentInputs[k].value = newSchedule[k].amount;
+  }
+
+  updateScheduleStatus();
+  closeScheduleModal();
+  showToast('تم حفظ الجدولة', 'success');
+}
+
+function saveApartment() {
+  var id = document.getElementById('apartmentId').value;
+  var contractNumber = document.getElementById('contractNumber').value.trim();
+  var apartmentName = document.getElementById('apartmentName').value.trim();
+  var tenantName = document.getElementById('tenantName').value.trim();
+  var utilities = document.getElementById('utilities').value.trim();
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+  var totalRent = parseFloat(document.getElementById('totalRent').value) || 0;
+  var paymentsCount = parseInt(document.getElementById('paymentsCount').value) || 0;
+  var externalCode = document.getElementById('externalCode').value;
+  var fullyPaid = document.getElementById('fullyPaid').checked;
+
+  // التحقق من الحقول المطلوبة
+  if (!contractNumber || !apartmentName || !tenantName || !startDate || !endDate || !totalRent) {
+    showToast('يرجى ملء جميع الحقول المطلوبة', 'warning');
+    return;
+  }
+
+  // عدد الدفعات مطلوب فقط إذا الإيجار غير مدفوع بالكامل
+  if (!fullyPaid && !paymentsCount) {
+    showToast('يرجى تحديد عدد الدفعات', 'warning');
+    return;
+  }
+
+  if (new Date(endDate) <= new Date(startDate)) {
+    showToast('تاريخ نهاية العقد يجب أن يكون بعد تاريخ البداية', 'warning');
+    return;
+  }
+
+  var payments = [];
+  var schedule = [];
+
+  if (fullyPaid) {
+    // مدفوع بالكامل: دفعة واحدة بكامل المبلغ
+    payments = [totalRent];
+    paymentsCount = 1;
+    schedule = [{
+      from: startDate,
+      to: endDate,
+      amount: totalRent
+    }];
+  } else {
+    // قراءة مبالغ الدفعات
+    var paymentInputs = document.querySelectorAll('.payment-amount');
+    for (var i = 0; i < paymentInputs.length; i++) {
+      payments.push(parseFloat(paymentInputs[i].value) || 0);
+    }
+
+    // إذا الجدولة موجودة استخدمها، وإلا ولدها تلقائياً
+    if (currentSchedule && currentSchedule.length === paymentsCount) {
+      schedule = currentSchedule;
+      // تحديث المبالغ في الجدولة من inputs
+      for (var k = 0; k < schedule.length; k++) {
+        schedule[k].amount = payments[k] || 0;
+      }
+    } else {
+      schedule = generateAutoSchedule(startDate, endDate, paymentsCount, payments);
+    }
+  }
+
+  var data = {
+    id: id,
+    contractNumber: contractNumber,
+    apartmentName: apartmentName,
+    tenantName: tenantName,
+    utilities: utilities,
+    startDate: startDate,
+    endDate: endDate,
+    totalRent: totalRent,
+    paymentsCount: paymentsCount,
+    payments: payments,
+    paymentSchedule: schedule,
+    externalCode: externalCode,
+    fullyPaid: fullyPaid
+  };
+
+  showTopLoader(true);
+
+  if (id) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showTopLoader(false);
+        if (result.success) {
+          showToast('تم تحديث الشقة بنجاح', 'success');
+          closeApartmentModal();
+          loadInitialData();
+        } else {
+          showToast(result.message, 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        showTopLoader(false);
+        showToast('خطأ: ' + err.message, 'error');
+      })
+      .updateApartment(data);
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showTopLoader(false);
+        if (result.success) {
+          showToast('تمت إضافة الشقة بنجاح', 'success');
+          closeApartmentModal();
+          loadInitialData();
+        } else {
+          showToast(result.message, 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        showTopLoader(false);
+        showToast('خطأ: ' + err.message, 'error');
+      })
+      .addApartment(data);
+  }
+}
+
+function confirmDeleteApartment(id) {
+  var apt = findApartmentById(id);
+  if (!apt) return;
+
+  if (confirm('هل أنت متأكد من حذف الشقة "' + apt.apartmentName + '"؟\nسيتم حذف جميع البيانات المرتبطة بها.')) {
+    showTopLoader(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showTopLoader(false);
+        if (result.success) {
+          showToast('تم الحذف بنجاح', 'success');
+          loadInitialData();
+        } else {
+          showToast(result.message, 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        showTopLoader(false);
+        showToast('خطأ: ' + err.message, 'error');
+      })
+      .deleteApartment(id);
+  }
+}
+
+// ============ الجدول ============
+function renderTable() {
+  var tbody = document.getElementById('dataTableBody');
+  var emptyState = document.getElementById('emptyTable');
+  var tableWrapper = document.querySelector('#tab-table .table-wrapper');
+
+  if (!apartments || apartments.length === 0) {
+    tbody.innerHTML = '';
+    if (tableWrapper) tableWrapper.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  if (tableWrapper) tableWrapper.style.display = 'block';
+
+  var monthData = monthlyDataCache[currentMonth] || {};
+  var html = '';
+
+  // عرض الشقق التي يقع الشهر المختار ضمن فترة عقدها فقط
+  for (var i = 0; i < apartments.length; i++) {
+    var apt = apartments[i];
+
+    // فلتر: الشقة لا تظهر إذا الشهر خارج فترة العقد
+    if (!isMonthInContract(currentMonth, apt.startDate, apt.endDate)) {
+      continue;
+    }
+
+    var aptData = monthData[apt.id] || {};
+    var rentStatus = aptData.rentStatus || '';
+    var utilitiesStatus = aptData.utilitiesStatus || '';
+    var paymentMethod = aptData.paymentMethod || '';
+    var paymentDate = aptData.paymentDate || '';
+
+    // معالجة تلقائية إذا لا توجد بيانات محفوظة
+    if (!rentStatus) {
+      if (apt.fullyPaid) {
+        rentStatus = 'paid';
+      } else {
+        var duePayment = findDuePaymentForMonth(apt, currentMonth);
+        rentStatus = duePayment ? 'pending' : 'none';
+      }
+    }
+
+    var days = calculateContractDays(apt.endDate, currentMonth);
+    var daysClass = getDaysClass(days);
+    var daysText = formatDaysText(days);
+
+    // طريقة الدفع
+    var paymentMethodDisplay = '';
+    if (paymentMethod) {
+      var methodText = paymentMethod === 'manual' ? 'يدوي' : 'تحويل';
+      var methodBg = paymentMethod === 'manual' ? '#dcfce7' : '#dbeafe';
+      var methodColor = paymentMethod === 'manual' ? '#16a34a' : '#1e40af';
+      paymentMethodDisplay = '<span class="status-badge" style="background:' + methodBg + ';color:' + methodColor + '">' + methodText + '</span>';
+    } else {
+      paymentMethodDisplay = '<span class="status-empty">—</span>';
+    }
+
+    // تاريخ الدفع - عمود مستقل
+    var paymentDateDisplay = '';
+    if (paymentDate) {
+      paymentDateDisplay = '<span class="payment-date-cell">' + formatDateDisplay(paymentDate) + '</span>';
+    } else {
+      paymentDateDisplay = '<span class="status-empty">—</span>';
+    }
+
+    var checkboxAttr = 'data-apt-id="' + apt.id + '" class="row-checkbox" onchange="onRowCheckboxChange()"';
+    var isChecked = selectedApartments[apt.id] ? ' checked' : '';
+
+    html += '<tr' + (isChecked ? ' class="row-selected"' : '') + '>' +
+      '<td style="text-align:center"><input type="checkbox" ' + checkboxAttr + isChecked + '></td>' +
+      '<td><span class="contract-num-cell">' + escapeHtml(apt.contractNumber || '—') + '</span></td>' +
+      '<td><span class="apartment-name-cell" data-tenant="' + escapeHtml(apt.tenantName) + '" onmouseover="showTenantTooltip(event, this)" onmouseout="hideTenantTooltip()" onclick="toggleTenantTooltipMobile(event, this)">' + escapeHtml(apt.apartmentName) + '</span></td>' +
+      '<td>' + renderStatusBadge(rentStatus) + '</td>' +
+      '<td>' + renderStatusBadge(utilitiesStatus) + '</td>' +
+      '<td>' + paymentMethodDisplay + '</td>' +
+      '<td>' + paymentDateDisplay + '</td>' +
+      '<td><span class="contract-days ' + daysClass + '">' + daysText + '</span></td>' +
+    '</tr>' +
+    '<tr style="background:#fafbfc"><td colspan="8" style="padding:6px 12px"><button class="btn btn-small btn-secondary" onclick="openMonthlyModal(\'' + apt.id + '\')">✏️ تعديل بيانات هذا الشهر</button></td></tr>';
+  }
+
+  if (!html) {
+    html = '<tr><td colspan="8" style="padding:30px;text-align:center;color:#6b7280">' +
+           '📅 لا توجد شقق نشطة في هذا الشهر<br>' +
+           '<span style="font-size:12px">جرب اختيار شهر آخر أو تأكد من تواريخ العقود</span>' +
+           '</td></tr>';
+  }
+
+  tbody.innerHTML = html;
+  updateBulkBar();
+}
+
+function renderStatusBadge(status) {
+  if (status === 'paid') {
+    return '<span class="status-badge status-paid">تم السداد</span>';
+  } else if (status === 'unpaid') {
+    return '<span class="status-badge status-unpaid">لم يتم السداد</span>';
+  } else if (status === 'pending') {
+    return '<span class="status-badge status-pending">لم يحن الاستحقاق</span>';
+  } else if (status === 'none') {
+    return '<span class="status-badge status-none">لا يوجد</span>';
+  }
+  return '<span class="status-empty">—</span>';
+}
+
+// ============ التعديل الجماعي ============
+
+/**
+ * تحديث شريط التعديل الجماعي حسب عدد المحدد
+ */
+function updateBulkBar() {
+  var count = Object.keys(selectedApartments).length;
+  var bar = document.getElementById('bulkActionsBar');
+  var countEl = document.getElementById('bulkSelectedCount');
+
+  if (count > 0) {
+    if (bar) bar.style.display = 'flex';
+    if (countEl) countEl.textContent = count;
+  } else {
+    if (bar) bar.style.display = 'none';
+  }
+
+  // تحديث "تحديد الكل" حسب الحالة
+  var selectAll = document.getElementById('selectAllCheckbox');
+  if (selectAll) {
+    var allRowCheckboxes = document.querySelectorAll('.row-checkbox');
+    var allChecked = allRowCheckboxes.length > 0;
+    for (var i = 0; i < allRowCheckboxes.length; i++) {
+      if (!allRowCheckboxes[i].checked) {
+        allChecked = false;
+        break;
+      }
+    }
+    selectAll.checked = allChecked;
+    selectAll.indeterminate = (count > 0 && !allChecked);
+  }
+}
+
+/**
+ * تحديث selectedApartments عند تغيير checkbox في صف
+ */
+function onRowCheckboxChange() {
+  selectedApartments = {};
+  var checkboxes = document.querySelectorAll('.row-checkbox');
+  for (var i = 0; i < checkboxes.length; i++) {
+    if (checkboxes[i].checked) {
+      var id = checkboxes[i].getAttribute('data-apt-id');
+      selectedApartments[id] = true;
+      // إضافة class للصف
+      var row = checkboxes[i].closest('tr');
+      if (row) row.classList.add('row-selected');
+    } else {
+      var row2 = checkboxes[i].closest('tr');
+      if (row2) row2.classList.remove('row-selected');
+    }
+  }
+  updateBulkBar();
+}
+
+/**
+ * تحديد/إلغاء تحديد الكل
+ */
+function toggleSelectAll() {
+  var selectAll = document.getElementById('selectAllCheckbox');
+  var checkboxes = document.querySelectorAll('.row-checkbox');
+  for (var i = 0; i < checkboxes.length; i++) {
+    checkboxes[i].checked = selectAll.checked;
+  }
+  onRowCheckboxChange();
+}
+
+/**
+ * إلغاء التحديد بالكامل
+ */
+function clearBulkSelection() {
+  selectedApartments = {};
+  var checkboxes = document.querySelectorAll('.row-checkbox');
+  for (var i = 0; i < checkboxes.length; i++) {
+    checkboxes[i].checked = false;
+  }
+  document.getElementById('selectAllCheckbox').checked = false;
+  document.getElementById('bulkRentStatus').value = '';
+  document.getElementById('bulkUtilitiesStatus').value = '';
+  onRowCheckboxChange();
+}
+
+/**
+ * تطبيق التعديل الجماعي على الشقق المحددة
+ */
+function applyBulkUpdate() {
+  var bulkRentStatus = document.getElementById('bulkRentStatus').value;
+  var bulkUtilitiesStatus = document.getElementById('bulkUtilitiesStatus').value;
+  var selectedIds = Object.keys(selectedApartments);
+
+  if (selectedIds.length === 0) {
+    showToast('لم يتم اختيار أي شقة', 'warning');
+    return;
+  }
+
+  if (!bulkRentStatus && !bulkUtilitiesStatus) {
+    showToast('اختر حالة واحدة على الأقل للتطبيق', 'warning');
+    return;
+  }
+
+  // تأكيد
+  var msg = 'سيتم تطبيق التعديل على ' + selectedIds.length + ' شقة. متابعة؟';
+  if (!confirm(msg)) return;
+
+  // بناء قائمة الطلبات
+  var items = [];
+  var billingRequests = []; // للشقق التي تحتاج جلب فاتورة
+  var existingMonthData = monthlyDataCache[currentMonth] || {};
+
+  for (var i = 0; i < selectedIds.length; i++) {
+    var aptId = selectedIds[i];
+    var apt = findApartmentById(aptId);
+    if (!apt) continue;
+
+    var existing = existingMonthData[aptId] || {};
+
+    var item = {
+      apartmentId: aptId,
+      month: currentMonth,
+      // نحافظ على القيم الموجودة لما لا يُختار حالة جديدة
+      rentStatus: bulkRentStatus || existing.rentStatus || '',
+      utilitiesStatus: bulkUtilitiesStatus || existing.utilitiesStatus || '',
+      paymentMethod: existing.paymentMethod || '',
+      paymentDate: existing.paymentDate || '',
+      rentAmount: existing.rentAmount || 0,
+      utilitiesAmount: existing.utilitiesAmount || 0
+    };
+
+    // === منطق حالة الإيجار ===
+    if (bulkRentStatus) {
+      if (bulkRentStatus === 'paid' || bulkRentStatus === 'pending' || bulkRentStatus === 'unpaid') {
+        // إذا المبلغ الحالي 0 أو فاضي، احسبه من الجدولة
+        if (!item.rentAmount || item.rentAmount === 0) {
+          if (apt.fullyPaid) {
+            // مدفوع بالكامل - نأخذ مبلغ الدفعة الواحدة
+            var duePay = findDuePaymentForMonth(apt, currentMonth);
+            item.rentAmount = duePay ? duePay.amount : 0;
+          } else {
+            var duePayment = findDuePaymentForMonth(apt, currentMonth);
+            item.rentAmount = duePayment ? duePayment.amount : 0;
+          }
+        }
+      } else if (bulkRentStatus === 'none') {
+        item.rentAmount = 0;
+      }
+    }
+
+    // === منطق حالة الكهرباء ===
+    if (bulkUtilitiesStatus === 'none') {
+      item.utilitiesAmount = 0;
+    } else if ((bulkUtilitiesStatus === 'paid' || bulkUtilitiesStatus === 'unpaid') &&
+               apt.externalCode &&
+               (!item.utilitiesAmount || item.utilitiesAmount === 0)) {
+      // نحتاج جلب من Supabase
+      billingRequests.push({
+        apartmentId: aptId,
+        externalCode: apt.externalCode,
+        month: currentMonth
+      });
+    }
+
+    items.push(item);
+  }
+
+  showTopLoader(true);
+  showToast('جاري التطبيق...', 'success');
+
+  // إذا فيه شقق تحتاج جلب فاتورة، نجلبها أولاً
+  if (billingRequests.length > 0) {
+    var requestsForServer = billingRequests.map(function(r) {
+      return { externalCode: r.externalCode, month: r.month };
+    });
+
+    google.script.run
+      .withSuccessHandler(function(billingResult) {
+        // ربط النتائج بالـ items
+        if (billingResult && billingResult.success && billingResult.results) {
+          for (var j = 0; j < billingRequests.length; j++) {
+            var br = billingRequests[j];
+            var matching = billingResult.results[j];
+            if (matching && matching.total) {
+              // ابحث عن item المطابق وحدّث utilitiesAmount
+              for (var m = 0; m < items.length; m++) {
+                if (items[m].apartmentId === br.apartmentId) {
+                  items[m].utilitiesAmount = matching.total;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        // الآن احفظ
+        performBulkSave(items);
+      })
+      .withFailureHandler(function(err) {
+        // فشل جلب الفواتير - نحفظ بدون مبالغ كهرباء
+        showToast('تعذر جلب بعض الفواتير، سيتم الحفظ بدونها', 'warning');
+        performBulkSave(items);
+      })
+      .batchGetBillingTotals(requestsForServer);
+  } else {
+    performBulkSave(items);
+  }
+}
+
+function performBulkSave(items) {
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result && result.success) {
+        // تحديث الـ cache محلياً
+        if (!monthlyDataCache[currentMonth]) {
+          monthlyDataCache[currentMonth] = {};
+        }
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          monthlyDataCache[currentMonth][it.apartmentId] = {
+            rentStatus: it.rentStatus,
+            utilitiesStatus: it.utilitiesStatus,
+            paymentMethod: it.paymentMethod,
+            paymentDate: it.paymentDate,
+            rentAmount: it.rentAmount,
+            utilitiesAmount: it.utilitiesAmount
+          };
+
+          if (!allMonthlyData[it.apartmentId]) {
+            allMonthlyData[it.apartmentId] = {};
+          }
+          allMonthlyData[it.apartmentId][currentMonth] = monthlyDataCache[currentMonth][it.apartmentId];
+        }
+
+        showToast('✓ تم تطبيق التعديل على ' + result.saved + ' شقة', 'success');
+
+        // تحديث ملخص الشقق المعدّلة محلياً
+        var updatedIds = items.map(function(it) { return it.apartmentId; });
+        updateMultipleSummaryCardsLocally(updatedIds);
+
+        clearBulkSelection();
+        renderTable();
+        renderInfoCards();
+
+        // إعادة رسم تاب الملخص لو كان مفتوحاً (نادر لكن للأمان)
+        var summaryTab = document.getElementById('tab-summary');
+        if (summaryTab && summaryTab.classList.contains('active')) {
+          renderSummary();
+        }
+      } else {
+        showToast('فشل التطبيق: ' + (result ? result.message : ''), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + err.message, 'error');
+    })
+    .batchSaveMonthlyData(items);
+}
+
+// ============ Modal بيانات الشهر ============
+function openMonthlyModal(apartmentId) {
+  var apt = findApartmentById(apartmentId);
+  if (!apt || !currentMonth) return;
+
+  var monthData = monthlyDataCache[currentMonth] || {};
+  var aptData = monthData[apartmentId] || {};
+
+  document.getElementById('monthlyApartmentId').value = apartmentId;
+  document.getElementById('monthlyMonth').value = currentMonth;
+  document.getElementById('monthlyApartmentName').value = apt.apartmentName;
+  document.getElementById('monthlyMonthDisplay').value = formatMonthDisplay(currentMonth);
+
+  // تحديد الدفعة المستحقة في هذا الشهر
+  var duePayment = findDuePaymentForMonth(apt, currentMonth);
+  var hasDuePayment = duePayment !== null;
+  var defaultRentAmount = duePayment ? duePayment.amount : 0;
+
+  // حالة الإيجار: إذا فيه بيانات محفوظة استخدمها، وإلا حدد افتراضياً
+  var rentStatus = aptData.rentStatus;
+  if (!rentStatus && !aptData.rentAmount) {
+    // لا توجد بيانات محفوظة - تحديد تلقائي
+    if (apt.fullyPaid) {
+      rentStatus = 'paid';
+    } else if (hasDuePayment) {
+      rentStatus = 'pending'; // لم يحن موعد الاستحقاق
+    } else {
+      rentStatus = 'none';
+    }
+  }
+  document.getElementById('monthlyRentStatus').value = rentStatus || '';
+
+  document.getElementById('monthlyUtilitiesStatus').value = aptData.utilitiesStatus || '';
+  document.getElementById('monthlyPaymentMethod').value = aptData.paymentMethod || '';
+  document.getElementById('monthlyPaymentDate').value = aptData.paymentDate || '';
+
+  // مبلغ الإيجار للشهر
+  var rentAmount = aptData.rentAmount;
+  if (rentAmount === undefined || rentAmount === null || rentAmount === 0) {
+    rentAmount = defaultRentAmount;
+  }
+  document.getElementById('monthlyRentAmount').value = rentAmount || 0;
+
+  document.getElementById('monthlyUtilitiesAmount').value = aptData.utilitiesAmount || 0;
+
+  // الملاحظات والمتأخرات الأخرى
+  document.getElementById('monthlyNotes').value = aptData.notes || '';
+  document.getElementById('monthlyOtherOverdue').value = aptData.otherOverdue || 0;
+
+  var dateGroup = document.getElementById('paymentDateGroup');
+  if (aptData.paymentMethod) {
+    dateGroup.style.display = 'block';
+  } else {
+    dateGroup.style.display = 'none';
+  }
+
+  // إعداد زر "جلب من الفواتير" حسب وجود externalCode
+  var fetchBtn = document.getElementById('fetchBillingBtn');
+  var billingBadge = document.getElementById('billingLinkBadge');
+  var statusEl = document.getElementById('billingFetchStatus');
+
+  if (apt.externalCode) {
+    if (fetchBtn) fetchBtn.style.display = 'inline-flex';
+    if (billingBadge) billingBadge.style.display = 'inline-block';
+    if (statusEl) {
+      statusEl.textContent = 'مربوطة بـ: ' + apt.externalCode;
+      statusEl.style.color = 'var(--gray-500)';
+    }
+
+    if (!aptData.utilitiesAmount || aptData.utilitiesAmount === 0) {
+      setTimeout(function() {
+        fetchBillingForMonth();
+      }, 300);
+    }
+  } else {
+    if (fetchBtn) fetchBtn.style.display = 'none';
+    if (billingBadge) billingBadge.style.display = 'none';
+    if (statusEl) statusEl.textContent = '';
+  }
+
+  document.getElementById('monthlyModal').style.display = 'flex';
+}
+
+/**
+ * عند تغيير حالة الإيجار، حدّث المبلغ تلقائياً إذا لزم
+ */
+function onRentStatusChange() {
+  var status = document.getElementById('monthlyRentStatus').value;
+  var apartmentId = document.getElementById('monthlyApartmentId').value;
+  var month = document.getElementById('monthlyMonth').value;
+  var apt = findApartmentById(apartmentId);
+  if (!apt) return;
+
+  // إذا اختار "تم السداد" أو "لم يحن موعد الاستحقاق" أو "لم يتم السداد"،
+  // املأ المبلغ بقيمة الدفعة المستحقة لهذا الشهر
+  if (status === 'paid' || status === 'pending' || status === 'unpaid') {
+    var duePayment = findDuePaymentForMonth(apt, month);
+    if (duePayment && duePayment.amount > 0) {
+      var currentAmount = parseFloat(document.getElementById('monthlyRentAmount').value) || 0;
+      // فقط لو المبلغ الحالي صفر أو فاضي، عبّيه
+      if (currentAmount === 0) {
+        document.getElementById('monthlyRentAmount').value = duePayment.amount;
+      }
+    }
+  } else if (status === 'none') {
+    document.getElementById('monthlyRentAmount').value = 0;
+  }
+}
+
+/**
+ * البحث عن الدفعة المستحقة في شهر معين
+ * يرجع كائن { from, to, amount, index } أو null لو لا توجد
+ */
+function findDuePaymentForMonth(apt, month) {
+  if (!apt || !month) return null;
+  if (!apt.paymentSchedule || apt.paymentSchedule.length === 0) return null;
+
+  // بداية ونهاية الشهر
+  var parts = month.split('-');
+  var monthStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+  var monthEnd = new Date(parseInt(parts[0]), parseInt(parts[1]), 0);
+
+  for (var i = 0; i < apt.paymentSchedule.length; i++) {
+    var s = apt.paymentSchedule[i];
+    if (!s.from || !s.to) continue;
+
+    var pFrom = new Date(s.from);
+    var pTo = new Date(s.to);
+
+    // الشهر يتقاطع مع فترة الدفعة
+    if (monthEnd >= pFrom && monthStart <= pTo) {
+      return {
+        from: s.from,
+        to: s.to,
+        amount: parseFloat(s.amount) || 0,
+        index: i
+      };
+    }
+  }
+
+  return null;
+}
+
+function closeMonthlyModal() {
+  document.getElementById('monthlyModal').style.display = 'none';
+}
+
+function saveMonthlyDataAction() {
+  var apartmentId = document.getElementById('monthlyApartmentId').value;
+  var month = document.getElementById('monthlyMonth').value;
+
+  var data = {
+    apartmentId: apartmentId,
+    month: month,
+    rentStatus: document.getElementById('monthlyRentStatus').value,
+    utilitiesStatus: document.getElementById('monthlyUtilitiesStatus').value,
+    paymentMethod: document.getElementById('monthlyPaymentMethod').value,
+    paymentDate: document.getElementById('monthlyPaymentDate').value,
+    rentAmount: parseFloat(document.getElementById('monthlyRentAmount').value) || 0,
+    utilitiesAmount: parseFloat(document.getElementById('monthlyUtilitiesAmount').value) || 0,
+    notes: document.getElementById('monthlyNotes').value || '',
+    otherOverdue: parseFloat(document.getElementById('monthlyOtherOverdue').value) || 0
+  };
+
+  showTopLoader(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result.success) {
+        // تحديث الـ cache محلياً (الشهر الحالي)
+        if (!monthlyDataCache[month]) {
+          monthlyDataCache[month] = {};
+        }
+        monthlyDataCache[month][apartmentId] = {
+          rentStatus: data.rentStatus,
+          utilitiesStatus: data.utilitiesStatus,
+          paymentMethod: data.paymentMethod,
+          paymentDate: data.paymentDate,
+          rentAmount: data.rentAmount,
+          utilitiesAmount: data.utilitiesAmount,
+          notes: data.notes,
+          otherOverdue: data.otherOverdue
+        };
+
+        // تحديث allMonthlyData لاستخدامه في الحسابات التراكمية
+        if (!allMonthlyData[apartmentId]) {
+          allMonthlyData[apartmentId] = {};
+        }
+        allMonthlyData[apartmentId][month] = monthlyDataCache[month][apartmentId];
+
+        showToast('تم الحفظ بنجاح', 'success');
+        closeMonthlyModal();
+
+        // إعادة الرسم من الـ cache المحدث - بدون إعادة جلب من الخادم
+        renderTable();
+        renderInfoCards();
+
+        // تحديث ملخص الشقة محلياً + إعادة رسم تاب الملخص لو كان مفتوحاً
+        updateSummaryCardLocally(apartmentId);
+        var summaryTab = document.getElementById('tab-summary');
+        if (summaryTab && summaryTab.classList.contains('active')) {
+          renderSummary();
+        }
+      } else {
+        showToast(result.message, 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + err.message, 'error');
+    })
+    .saveMonthlyData(data);
+}
+
+// ============ بطاقات معلومات الشقق ============
+function renderInfoCards() {
+  var container = document.getElementById('cardsGrid');
+  var emptyState = document.getElementById('emptyInfo');
+
+  if (!apartments || apartments.length === 0) {
+    container.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  var monthData = monthlyDataCache[currentMonth] || {};
+  var html = '';
+
+  // عرض الشقق التي يقع الشهر المختار ضمن فترة عقدها فقط
+  for (var i = 0; i < apartments.length; i++) {
+    var apt = apartments[i];
+
+    // فلتر: الشقة لا تظهر إذا الشهر خارج فترة العقد
+    if (!isMonthInContract(currentMonth, apt.startDate, apt.endDate)) {
+      continue;
+    }
+
+    var aptData = monthData[apt.id] || {};
+
+    // مدة العقد ديناميكية حسب الشهر المختار
+    var days = calculateContractDays(apt.endDate, currentMonth);
+    var isWarning = days !== null && days <= 60 && days > 0;
+    var isExpired = days !== null && days <= 0;
+
+    // ===== منطق fullyPaid =====
+    var paidCount, paidAmount, remainingCount, remainingAmount, progressPercent;
+
+    if (apt.fullyPaid) {
+      // مدفوع بالكامل
+      paidCount = apt.paymentsCount || 1;
+      paidAmount = apt.totalRent || 0;
+      remainingCount = 0;
+      remainingAmount = 0;
+      progressPercent = 100;
+    } else {
+      // حساب تراكمي حتى نهاية الشهر المختار
+      var cumulativeStats = calculateCumulativeStats(apt, currentMonth);
+      paidCount = cumulativeStats.paidCount;
+      paidAmount = cumulativeStats.paidAmount;
+      remainingCount = apt.paymentsCount - paidCount;
+      if (remainingCount < 0) remainingCount = 0;
+      remainingAmount = apt.totalRent - paidAmount;
+      if (remainingAmount < 0) remainingAmount = 0;
+      progressPercent = apt.paymentsCount > 0 ? (paidCount / apt.paymentsCount) * 100 : 0;
+      if (progressPercent > 100) progressPercent = 100;
+    }
+
+    // الإيجار للشهر المختار
+    var rentStatus = aptData.rentStatus || '';
+    var rentAmount = aptData.rentAmount;
+
+    // معالجة تلقائية إذا لا توجد بيانات
+    if (!rentStatus) {
+      if (apt.fullyPaid) {
+        rentStatus = 'paid';
+        var duePayment2 = findDuePaymentForMonth(apt, currentMonth);
+        if (rentAmount === undefined || rentAmount === null || rentAmount === 0) {
+          rentAmount = duePayment2 ? duePayment2.amount : 0;
+        }
+      } else {
+        var duePayment = findDuePaymentForMonth(apt, currentMonth);
+        if (duePayment) {
+          rentStatus = 'pending';
+          if (rentAmount === undefined || rentAmount === null || rentAmount === 0) {
+            rentAmount = duePayment.amount;
+          }
+        } else {
+          rentStatus = 'none';
+          rentAmount = 0;
+        }
+      }
+    }
+
+    var rentDisplay = '';
+    var rentClass = '';
+
+    if (rentStatus === 'paid') {
+      rentDisplay = formatNumber(rentAmount) + ' ر.س ✓';
+      rentClass = 'success';
+    } else if (rentStatus === 'unpaid') {
+      rentDisplay = '-' + formatNumber(rentAmount) + ' ر.س';
+      rentClass = 'danger';
+    } else if (rentStatus === 'pending') {
+      rentDisplay = formatNumber(rentAmount) + ' ر.س ⏳';
+      rentClass = 'pending';
+    } else if (rentStatus === 'none') {
+      rentDisplay = 'لا يوجد';
+      rentClass = '';
+    } else {
+      rentDisplay = formatNumber(rentAmount) + ' ر.س';
+      rentClass = '';
+    }
+
+    var utilitiesAmount = aptData.utilitiesAmount || 0;
+    var utilitiesStatus = aptData.utilitiesStatus || '';
+    var utilitiesDisplay = '';
+    var utilitiesClass = '';
+
+    if (utilitiesStatus === 'paid') {
+      utilitiesDisplay = formatNumber(utilitiesAmount) + ' ر.س ✓';
+      utilitiesClass = 'success';
+    } else if (utilitiesStatus === 'unpaid') {
+      utilitiesDisplay = '-' + formatNumber(utilitiesAmount) + ' ر.س';
+      utilitiesClass = 'danger';
+    } else if (utilitiesStatus === 'none') {
+      utilitiesDisplay = 'لا يوجد';
+    } else {
+      utilitiesDisplay = '— لم يتم الإدخال —';
+    }
+
+    var contractBadge = '';
+    if (isExpired) {
+      contractBadge = '<span class="contract-warning-badge" style="background:#374151;color:#fff">⛔ منتهي</span>';
+    } else if (isWarning) {
+      contractBadge = '<span class="contract-warning-badge">⚠️ ' + days + ' يوم متبقي</span>';
+    }
+
+    var fullyPaidBadge = apt.fullyPaid
+      ? '<span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-right:6px">💰 مدفوع بالكامل</span>'
+      : '';
+
+    html += '<div class="info-card' + (isWarning || isExpired ? ' warning' : '') + (apt.fullyPaid ? ' fully-paid' : '') + '" data-apt-id="' + apt.id + '">' +
+      '<div class="info-card-title">' +
+        '<span>' +
+          '<span class="drag-handle" title="اسحب لإعادة الترتيب">⋮⋮</span>' +
+          (apt.contractNumber ? '<span class="contract-badge">عقد: ' + escapeHtml(apt.contractNumber) + '</span> ' : '') +
+          '🏠 ' + escapeHtml(apt.apartmentName) +
+          ' ' + fullyPaidBadge +
+        '</span>' +
+        contractBadge +
+      '</div>' +
+      '<div class="info-card-stats">' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">المستأجر:</span>' +
+          '<span class="stat-value">' + escapeHtml(apt.tenantName) + '</span>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">الدفعات:</span>' +
+          '<span class="stat-value">' + paidCount + ' / ' + apt.paymentsCount + ' (متبقي: ' + remainingCount + ')</span>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">التقدم:</span>' +
+          '<div class="payments-progress" style="flex:1;margin-right:8px">' +
+            '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPercent + '%"></div></div>' +
+            '<span style="font-size:12px;font-weight:700">' + Math.round(progressPercent) + '%</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">المبلغ المدفوع:</span>' +
+          '<span class="stat-value success">' + formatNumber(paidAmount) + ' / ' + formatNumber(apt.totalRent) + ' ر.س</span>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">المتبقي من الإيجار:</span>' +
+          '<span class="stat-value ' + (remainingAmount > 0 ? 'danger' : 'success') + '">' + formatNumber(remainingAmount) + ' ر.س</span>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">إيجار الشهر الحالي:</span>' +
+          '<span class="stat-value ' + rentClass + '">' + rentDisplay + '</span>' +
+        '</div>' +
+        '<div class="stat-row">' +
+          '<span class="stat-label">الكهرباء والماء:</span>' +
+          '<span class="stat-value ' + utilitiesClass + '">' + utilitiesDisplay + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  if (!html) {
+    html = '<div class="empty-state" style="grid-column:1/-1">' +
+           '<div class="empty-icon">📅</div>' +
+           '<p>لا توجد شقق نشطة في هذا الشهر</p>' +
+           '<p style="font-size:13px;color:var(--gray-500)">جرب اختيار شهر آخر أو تأكد من تواريخ العقود</p>' +
+           '</div>';
+  }
+
+  container.innerHTML = html;
+
+  // تفعيل السحب والإفلات
+  enableDragAndDrop('cardsGrid', '.info-card', 'data-apt-id');
+}
+
+/**
+ * حساب الإحصائيات التراكمية حتى نهاية الشهر المختار
+ */
+function calculateCumulativeStats(apt, untilMonth) {
+  var paidCount = 0;
+  var paidAmount = 0;
+
+  if (!untilMonth) return { paidCount: 0, paidAmount: 0 };
+
+  // إذا الإيجار مدفوع بالكامل
+  if (apt.fullyPaid) {
+    return {
+      paidCount: apt.paymentsCount || 1,
+      paidAmount: apt.totalRent || 0
+    };
+  }
+
+  if (!allMonthlyData[apt.id]) {
+    return { paidCount: 0, paidAmount: 0 };
+  }
+
+  var aptMonthlyData = allMonthlyData[apt.id];
+  for (var month in aptMonthlyData) {
+    if (aptMonthlyData.hasOwnProperty(month)) {
+      if (month <= untilMonth) {
+        var data = aptMonthlyData[month];
+        if (data.rentStatus === 'paid') {
+          paidCount++;
+          paidAmount += parseFloat(data.rentAmount) || 0;
+        }
+      }
+    }
+  }
+
+  return { paidCount: paidCount, paidAmount: paidAmount };
+}
+
+// ============ Tooltip اسم المستأجر ============
+function showTenantTooltip(event, element) {
+  var tooltip = document.getElementById('tenantTooltip');
+  var tenant = element.getAttribute('data-tenant');
+  if (!tenant) return;
+
+  tooltip.textContent = '👤 ' + tenant;
+  tooltip.style.display = 'block';
+
+  var rect = element.getBoundingClientRect();
+  tooltip.style.top = (rect.top - 45) + 'px';
+  tooltip.style.right = (window.innerWidth - rect.right) + 'px';
+}
+
+function hideTenantTooltip() {
+  document.getElementById('tenantTooltip').style.display = 'none';
+}
+
+function toggleTenantTooltipMobile(event, element) {
+  event.stopPropagation();
+  var tooltip = document.getElementById('tenantTooltip');
+  if (tooltip.style.display === 'block') {
+    hideTenantTooltip();
+  } else {
+    showTenantTooltip(event, element);
+  }
+}
+
+// ============ دوال مساعدة ============
+function findApartmentById(id) {
+  for (var i = 0; i < apartments.length; i++) {
+    if (apartments[i].id === id) return apartments[i];
+  }
+  return null;
+}
+
+function calculateContractDays(endDate, referenceMonth) {
+  if (!endDate) return null;
+  var end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  var refDate;
+
+  if (referenceMonth) {
+    var parts = referenceMonth.split('-');
+    var refYear = parseInt(parts[0]);
+    var refMonth = parseInt(parts[1]) - 1; // 0-indexed
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var todayYear = today.getFullYear();
+    var todayMonth = today.getMonth();
+
+    if (refYear === todayYear && refMonth === todayMonth) {
+      // الشهر الحالي - استخدم اليوم الحالي
+      refDate = today;
+    } else if (refYear < todayYear || (refYear === todayYear && refMonth < todayMonth)) {
+      // شهر سابق - استخدم آخر يوم في الشهر
+      refDate = new Date(refYear, refMonth + 1, 0);
+    } else {
+      // شهر مستقبلي - استخدم بداية الشهر
+      refDate = new Date(refYear, refMonth, 1);
+    }
+    refDate.setHours(0, 0, 0, 0);
+  } else {
+    refDate = new Date();
+    refDate.setHours(0, 0, 0, 0);
+  }
+
+  var diff = end - refDate;
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function getDaysClass(days) {
+  if (days === null) return '';
+  if (days <= 0) return 'expired';
+  if (days <= 60) return 'warning';
+  return 'normal';
+}
+
+function formatDaysText(days) {
+  if (days === null) return '—';
+  if (days <= 0) return 'منتهي';
+  return days + ' يوم';
+}
+
+function isMonthInContract(month, startDate, endDate) {
+  if (!month || !startDate || !endDate) return false;
+
+  var parts = month.split('-');
+  var monthStart = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+  var monthEnd = new Date(parseInt(parts[0]), parseInt(parts[1]), 0);
+
+  var contractStart = new Date(startDate);
+  var contractEnd = new Date(endDate);
+
+  return monthEnd >= contractStart && monthStart <= contractEnd;
+}
+
+function calculateMonthlyRentFromPayments(apt, month) {
+  var contractMonths = getContractMonthsCount(apt.startDate, apt.endDate);
+  if (contractMonths <= 0) return 0;
+  // تقريب لخانتين عشريتين
+  return Math.round((apt.totalRent / contractMonths) * 100) / 100;
+}
+
+function getContractMonthsCount(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+  var start = new Date(startDate);
+  var end = new Date(endDate);
+
+  // عدد الأشهر بين تاريخين: نحسب فرق السنوات والشهور
+  var months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+  // إذا تاريخ النهاية في يوم لاحق أو يساوي تاريخ البداية في الشهر، نضيف 1
+  // مثال: من 2025-09-09 إلى 2026-09-08 → 12 شهر (لأن 8 < 9)
+  //       من 2025-09-09 إلى 2026-09-09 → 13 شهر (لأن 9 >= 9)
+  //       من 2025-09-09 إلى 2026-09-10 → 13 شهر
+  if (end.getDate() >= start.getDate()) {
+    months += 1;
+  }
+
+  return months > 0 ? months : 0;
+}
+
+function formatNumber(num) {
+  if (!num && num !== 0) return '0';
+  return parseFloat(num).toLocaleString('ar-SA', { maximumFractionDigits: 2 });
+}
+
+function formatMonthDisplay(month) {
+  if (!month) return '';
+  var parts = month.split('-');
+  var monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+                    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  var idx = parseInt(parts[1]) - 1;
+  if (idx >= 0 && idx < 12) {
+    return monthNames[idx] + ' ' + parts[0];
+  }
+  return month;
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function hideLoadingScreen() {
+  var screen = document.getElementById('loadingScreen');
+  if (screen) {
+    screen.style.opacity = '0';
+    screen.style.transition = 'opacity 0.3s ease';
+    setTimeout(function() {
+      screen.style.display = 'none';
+    }, 300);
+  }
+}
+
+function showTopLoader(show) {
+  var loader = document.getElementById('topLoader');
+  if (loader) {
+    loader.style.display = show ? 'block' : 'none';
+  }
+}
+
+function showToast(message, type) {
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type || '');
+
+  var icon = '✓';
+  if (type === 'error') icon = '✕';
+  else if (type === 'warning') icon = '⚠';
+  else if (type === 'success') icon = '✓';
+
+  toast.innerHTML = '<span>' + icon + '</span> ' + message;
+  container.appendChild(toast);
+
+  setTimeout(function() {
+    toast.style.animation = 'fadeIn 0.3s ease reverse';
+    setTimeout(function() {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 300);
+  }, 3000);
+}
+
+// ============ دوال الربط مع نظام الفواتير (Supabase) ============
+
+var billingCodesCache = null;
+
+// ============ Drag & Drop للبطاقات ============
+
+var draggedElement = null;
+var draggedId = null;
+
+/**
+ * تفعيل خاصية السحب والإفلات على عناصر داخل حاوية معينة
+ * @param {string} containerId - id الحاوية
+ * @param {string} itemSelector - selector للعناصر القابلة للسحب
+ * @param {string} idAttribute - اسم الـ data attribute اللي يحمل الـ id
+ */
+function enableDragAndDrop(containerId, itemSelector, idAttribute) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  var items = container.querySelectorAll(itemSelector);
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    item.setAttribute('draggable', 'true');
+    item.classList.add('draggable-item');
+
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('drop', handleDrop(containerId, idAttribute));
+    item.addEventListener('dragenter', handleDragEnter);
+    item.addEventListener('dragleave', handleDragLeave);
+  }
+}
+
+function handleDragStart(e) {
+  draggedElement = this;
+  draggedId = this.getAttribute('data-apt-id') || this.getAttribute('data-id');
+  this.classList.add('dragging');
+
+  // تأخير لتحسين الأداء البصري
+  setTimeout(function() {
+    if (draggedElement) draggedElement.classList.add('drag-source');
+  }, 0);
+
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', draggedId || '');
+    } catch (err) {}
+  }
+}
+
+function handleDragEnd(e) {
+  if (this.classList) {
+    this.classList.remove('dragging');
+    this.classList.remove('drag-source');
+  }
+  // إزالة كل drag-over classes
+  var allItems = document.querySelectorAll('.drag-over');
+  for (var i = 0; i < allItems.length; i++) {
+    allItems[i].classList.remove('drag-over');
+  }
+  draggedElement = null;
+  draggedId = null;
+}
+
+function handleDragOver(e) {
+  if (e.preventDefault) e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  return false;
+}
+
+function handleDragEnter(e) {
+  if (this !== draggedElement) {
+    this.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function handleDrop(containerId, idAttribute) {
+  return function(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+
+    if (draggedElement && draggedElement !== this) {
+      // تحديد مكان الإفلات (قبل أو بعد العنصر الحالي)
+      var container = document.getElementById(containerId);
+      var allItems = Array.prototype.slice.call(
+        container.querySelectorAll('.draggable-item')
+      );
+      var draggedIdx = allItems.indexOf(draggedElement);
+      var targetIdx = allItems.indexOf(this);
+
+      if (draggedIdx < targetIdx) {
+        // إسقاط بعد الهدف
+        this.parentNode.insertBefore(draggedElement, this.nextSibling);
+      } else {
+        // إسقاط قبل الهدف
+        this.parentNode.insertBefore(draggedElement, this);
+      }
+
+      // قراءة الترتيب الجديد وحفظه
+      saveNewOrder(containerId);
+    }
+
+    this.classList.remove('drag-over');
+    return false;
+  };
+}
+
+/**
+ * قراءة الترتيب من DOM وحفظه + إعادة ترتيب apartments محلياً
+ */
+function saveNewOrder(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  var items = container.querySelectorAll('.draggable-item');
+  var orderedIds = [];
+  for (var i = 0; i < items.length; i++) {
+    var id = items[i].getAttribute('data-apt-id') || items[i].getAttribute('data-id');
+    if (id) orderedIds.push(id);
+  }
+
+  if (orderedIds.length === 0) return;
+
+  // إعادة ترتيب apartments محلياً ليتطابق العرض في باقي التابات
+  reorderApartmentsLocally(orderedIds);
+
+  showTopLoader(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result && result.success) {
+        showToast('تم حفظ الترتيب', 'success');
+      } else {
+        showToast('فشل الحفظ: ' + (result ? result.message : ''), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + (err.message || err), 'error');
+    })
+    .saveApartmentsOrder(orderedIds);
+}
+
+/**
+ * إعادة ترتيب apartments محلياً (بدون إعادة جلب من الخادم)
+ */
+function reorderApartmentsLocally(orderedIds) {
+  var orderMap = {};
+  for (var i = 0; i < orderedIds.length; i++) {
+    orderMap[orderedIds[i]] = i;
+  }
+
+  apartments.sort(function(a, b) {
+    var aOrder = orderMap[a.id];
+    var bOrder = orderMap[b.id];
+    if (aOrder === undefined) aOrder = 9999;
+    if (bOrder === undefined) bOrder = 9999;
+    return aOrder - bOrder;
+  });
+
+  // تحديث displayOrder في البيانات المحلية
+  for (var k = 0; k < apartments.length; k++) {
+    apartments[k].displayOrder = orderMap[apartments[k].id];
+  }
+
+  // إعادة ترتيب summaryData أيضاً لو موجودة
+  if (summaryData && summaryData.length > 0) {
+    summaryData.sort(function(a, b) {
+      // أولاً المتأخرات (نفس الترتيب السابق)
+      var aOver = (a.overdueRentAmount > 0 || a.overdueUtilitiesAmount > 0) ? 1 : 0;
+      var bOver = (b.overdueRentAmount > 0 || b.overdueUtilitiesAmount > 0) ? 1 : 0;
+      if (aOver !== bOver) return bOver - aOver;
+      // ثانياً حسب الترتيب اليدوي
+      var aOrder = orderMap[a.id];
+      var bOrder = orderMap[b.id];
+      if (aOrder === undefined) aOrder = 9999;
+      if (bOrder === undefined) bOrder = 9999;
+      return aOrder - bOrder;
+    });
+  }
+}
+
+
+// ============ صفحة ملخص العقود ============
+
+var summaryData = []; // كل ملخصات الشقق
+var summaryFilter = 'all'; // الفلتر الحالي
+var summarySearchTerm = ''; // مصطلح البحث
+var expandedSummaryCards = {}; // الشقق المفتوحة
+
+/**
+ * تحميل بيانات الملخص من الخادم
+ */
+function loadSummaryData(forceRefresh) {
+  // استخدام الـ cache لو موجود ومش forced
+  if (!forceRefresh && summaryData && summaryData.length > 0) {
+    renderSummary();
+    return;
+  }
+
+  showTopLoader(true);
+  var emptyState = document.getElementById('emptySummary');
+  if (emptyState) emptyState.style.display = 'none';
+
+  var listEl = document.getElementById('summaryCardsList');
+  if (listEl) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-500)">' +
+      '<div class="spinner" style="margin:0 auto 10px"></div>جاري حساب الملخصات...</div>';
+  }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result && result.success) {
+        summaryData = result.data || [];
+        if (forceRefresh) {
+          showToast('تم التحديث', 'success');
+        }
+        renderSummary();
+      } else {
+        showToast('خطأ: ' + (result ? result.message : 'فشل التحميل'), 'error');
+        if (listEl) listEl.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + (err.message || err), 'error');
+      if (listEl) listEl.innerHTML = '';
+      if (emptyState) emptyState.style.display = 'block';
+    })
+    .getApartmentsSummary();
+}
+
+/**
+ * عرض كل الملخص: الإحصائيات + الفلاتر + الكروت
+ */
+function renderSummary() {
+  renderSummaryStats();
+  renderSummaryFilters();
+  renderSummaryCards();
+}
+
+/**
+ * عرض البطاقات الإحصائية في الأعلى
+ */
+function renderSummaryStats() {
+  var container = document.getElementById('summaryStatsGrid');
+  if (!container) return;
+
+  var stats = {
+    totalApartments: summaryData.length,
+    totalRentSum: 0,
+    paidRentSum: 0,
+    remainingRentSum: 0,
+    overdueRentSum: 0,
+    overdueRentCount: 0,
+    overdueUtilSum: 0,
+    overdueUtilCount: 0,
+    otherOverdueSum: 0,
+    otherOverdueCount: 0,
+    grandTotalOverdue: 0
+  };
+
+  for (var i = 0; i < summaryData.length; i++) {
+    var s = summaryData[i];
+    stats.totalRentSum += s.totalRent || 0;
+    stats.paidRentSum += s.paidRentAmount || 0;
+    stats.remainingRentSum += s.remainingRent || 0;
+    stats.overdueRentSum += s.overdueRentAmount || 0;
+    if (s.overdueRentAmount > 0) stats.overdueRentCount++;
+    stats.overdueUtilSum += s.overdueUtilitiesAmount || 0;
+    if (s.overdueUtilitiesAmount > 0) stats.overdueUtilCount++;
+    stats.otherOverdueSum += s.otherOverdueAmount || 0;
+    if (s.otherOverdueAmount > 0) stats.otherOverdueCount++;
+    stats.grandTotalOverdue += s.totalOverdue || 0;
+  }
+
+  var html = '' +
+    '<div class="stat-card stat-blue">' +
+      '<div class="stat-card-icon">🏠</div>' +
+      '<div class="stat-card-value">' + stats.totalApartments + '</div>' +
+      '<div class="stat-card-label">شقة</div>' +
+    '</div>' +
+    '<div class="stat-card stat-purple">' +
+      '<div class="stat-card-icon">💰</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.totalRentSum) + '</div>' +
+      '<div class="stat-card-label">إجمالي الإيجارات (ر.س)</div>' +
+    '</div>' +
+    '<div class="stat-card stat-green">' +
+      '<div class="stat-card-icon">✅</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.paidRentSum) + '</div>' +
+      '<div class="stat-card-label">المدفوع (ر.س)</div>' +
+    '</div>' +
+    '<div class="stat-card stat-orange">' +
+      '<div class="stat-card-icon">⏰</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.remainingRentSum) + '</div>' +
+      '<div class="stat-card-label">المتبقي (ر.س)</div>' +
+    '</div>' +
+    '<div class="stat-card ' + (stats.overdueRentCount > 0 ? 'stat-red' : 'stat-gray') + '">' +
+      '<div class="stat-card-icon">❗</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.overdueRentSum) + '</div>' +
+      '<div class="stat-card-label">متأخرات إيجار (' + stats.overdueRentCount + ')</div>' +
+    '</div>' +
+    '<div class="stat-card ' + (stats.overdueUtilCount > 0 ? 'stat-red' : 'stat-gray') + '">' +
+      '<div class="stat-card-icon">⚡</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.overdueUtilSum) + '</div>' +
+      '<div class="stat-card-label">متأخرات كهرباء (' + stats.overdueUtilCount + ')</div>' +
+    '</div>' +
+    '<div class="stat-card ' + (stats.otherOverdueCount > 0 ? 'stat-red' : 'stat-gray') + '">' +
+      '<div class="stat-card-icon">📝</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.otherOverdueSum) + '</div>' +
+      '<div class="stat-card-label">متأخرات أخرى (' + stats.otherOverdueCount + ')</div>' +
+    '</div>' +
+    '<div class="stat-card ' + (stats.grandTotalOverdue > 0 ? 'stat-red' : 'stat-gray') + '" style="border-top-width:6px">' +
+      '<div class="stat-card-icon">⚠️</div>' +
+      '<div class="stat-card-value">' + formatNumber(stats.grandTotalOverdue) + '</div>' +
+      '<div class="stat-card-label"><strong>مجموع كل المتأخرات</strong> (ر.س)</div>' +
+    '</div>';
+
+  container.innerHTML = html;
+}
+
+/**
+ * تحديث أعداد الفلاتر
+ */
+function renderSummaryFilters() {
+  var counts = { all: 0, overdue: 0, fullyPaid: 0, endingSoon: 0 };
+
+  for (var i = 0; i < summaryData.length; i++) {
+    var s = summaryData[i];
+    counts.all++;
+    if (s.overdueRentAmount > 0 || s.overdueUtilitiesAmount > 0 || s.otherOverdueAmount > 0) counts.overdue++;
+    if (s.fullyPaid) counts.fullyPaid++;
+    if (s.daysRemaining !== null && s.daysRemaining > 0 && s.daysRemaining <= 60) counts.endingSoon++;
+  }
+
+  var elAll = document.getElementById('countAll');
+  var elOverdue = document.getElementById('countOverdue');
+  var elFullyPaid = document.getElementById('countFullyPaid');
+  var elEndingSoon = document.getElementById('countEndingSoon');
+  if (elAll) elAll.textContent = counts.all;
+  if (elOverdue) elOverdue.textContent = counts.overdue;
+  if (elFullyPaid) elFullyPaid.textContent = counts.fullyPaid;
+  if (elEndingSoon) elEndingSoon.textContent = counts.endingSoon;
+}
+
+/**
+ * تطبيق الفلاتر + البحث وعرض البطاقات
+ */
+function renderSummaryCards() {
+  var container = document.getElementById('summaryCardsList');
+  var emptyState = document.getElementById('emptySummary');
+  if (!container) return;
+
+  // فلترة
+  var filtered = [];
+  for (var i = 0; i < summaryData.length; i++) {
+    var s = summaryData[i];
+
+    // فلتر التاب
+    if (summaryFilter === 'overdue') {
+      if (s.overdueRentAmount <= 0 && s.overdueUtilitiesAmount <= 0 && s.otherOverdueAmount <= 0) continue;
+    } else if (summaryFilter === 'fullyPaid') {
+      if (!s.fullyPaid) continue;
+    } else if (summaryFilter === 'endingSoon') {
+      if (s.daysRemaining === null || s.daysRemaining <= 0 || s.daysRemaining > 60) continue;
+    }
+
+    // فلتر البحث
+    if (summarySearchTerm) {
+      var term = summarySearchTerm.toLowerCase();
+      var match = (s.contractNumber || '').toLowerCase().indexOf(term) !== -1 ||
+                  (s.apartmentName || '').toLowerCase().indexOf(term) !== -1 ||
+                  (s.tenantName || '').toLowerCase().indexOf(term) !== -1;
+      if (!match) continue;
+    }
+
+    filtered.push(s);
+  }
+
+  // ترتيب: المتأخرات أولاً، ثم حسب الترتيب اليدوي (displayOrder)
+  filtered.sort(function(a, b) {
+    var aOver = (a.overdueRentAmount > 0 || a.overdueUtilitiesAmount > 0 || a.otherOverdueAmount > 0) ? 1 : 0;
+    var bOver = (b.overdueRentAmount > 0 || b.overdueUtilitiesAmount > 0 || b.otherOverdueAmount > 0) ? 1 : 0;
+    if (aOver !== bOver) return bOver - aOver;
+    // ثانوي: حسب الترتيب اليدوي من apartments
+    var aApt = findApartmentById(a.id);
+    var bApt = findApartmentById(b.id);
+    var aOrder = (aApt && aApt.displayOrder !== undefined) ? aApt.displayOrder : 9999;
+    var bOrder = (bApt && bApt.displayOrder !== undefined) ? bApt.displayOrder : 9999;
+    return aOrder - bOrder;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    if (emptyState) emptyState.style.display = 'block';
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = 'none';
+
+  var html = '';
+  for (var j = 0; j < filtered.length; j++) {
+    html += renderSummaryCard(filtered[j]);
+  }
+  container.innerHTML = html;
+
+  // تفعيل السحب والإفلات
+  enableDragAndDrop('summaryCardsList', '.summary-card', 'data-id');
+}
+
+/**
+ * بناء بطاقة شقة في الملخص
+ */
+function renderSummaryCard(s) {
+  var hasOverdue = s.overdueRentAmount > 0 || s.overdueUtilitiesAmount > 0 || s.otherOverdueAmount > 0;
+  var isExpanded = expandedSummaryCards[s.id] === true;
+  var progressPercent = s.totalRent > 0 ? (s.paidRentAmount / s.totalRent) * 100 : 0;
+  if (progressPercent > 100) progressPercent = 100;
+
+  var cardClass = 'summary-card';
+  if (hasOverdue) cardClass += ' has-overdue';
+  if (s.fullyPaid) cardClass += ' fully-paid';
+  if (isExpanded) cardClass += ' expanded';
+
+  var html = '<div class="' + cardClass + '" data-id="' + s.id + '">';
+
+  // ===== Header مطوي =====
+  html += '<div class="summary-card-header">';
+  html +=   '<div class="summary-card-header-main" onclick="toggleSummaryCard(\'' + s.id + '\')">';
+  html +=     '<div class="summary-card-title">';
+  html +=       '<span class="drag-handle" title="اسحب لإعادة الترتيب" onclick="event.stopPropagation()">⋮⋮</span>';
+  html +=       '<span class="expand-icon">' + (isExpanded ? '▲' : '▼') + '</span>';
+  if (s.contractNumber) {
+    html +=     '<span class="contract-badge">عقد: ' + escapeHtml(s.contractNumber) + '</span>';
+  }
+  html +=       '<span class="apt-name">🏠 ' + escapeHtml(s.apartmentName) + '</span>';
+  if (s.fullyPaid) {
+    html +=     '<span class="paid-badge">💰 مدفوع بالكامل</span>';
+  }
+  if (hasOverdue) {
+    html +=     '<span class="overdue-badge">⚠️ متأخرات</span>';
+  }
+  html +=     '</div>';
+  html +=     '<div class="summary-card-meta">';
+  html +=       '<span>👤 ' + escapeHtml(s.tenantName) + '</span>';
+  html +=       '<span>📅 ' + s.startDate + ' → ' + s.endDate + ' (' + s.contractMonthsCount + ' شهر)</span>';
+  if (s.daysRemaining !== null) {
+    var daysClass = s.daysRemaining <= 0 ? 'expired' : (s.daysRemaining <= 60 ? 'warning' : 'normal');
+    var daysText = s.daysRemaining <= 0 ? 'منتهي' : (s.daysRemaining + ' يوم متبقي');
+    html +=     '<span class="contract-days ' + daysClass + '">' + daysText + '</span>';
+  }
+  html +=     '</div>';
+  html +=   '</div>';
+  html += '</div>';
+
+  // ===== الملخص المالي السريع =====
+  html += '<div class="summary-card-quick">';
+  html +=   '<div class="quick-row">';
+  html +=     '<div class="quick-stat">';
+  html +=       '<span class="quick-label">💰 الإيجار:</span>';
+  html +=       '<span class="quick-value">' + formatNumber(s.paidRentAmount) + ' / ' + formatNumber(s.totalRent) + ' ر.س</span>';
+  html +=     '</div>';
+  html +=     '<div class="quick-progress">';
+  html +=       '<div class="progress-bar"><div class="progress-fill" style="width:' + progressPercent + '%"></div></div>';
+  html +=       '<span class="progress-text">' + Math.round(progressPercent) + '%</span>';
+  html +=     '</div>';
+  html +=   '</div>';
+
+  if (s.overdueRentAmount > 0) {
+    html += '<div class="quick-overdue">';
+    html +=   '<strong>❗ متأخرات إيجار:</strong> ' + formatNumber(s.overdueRentAmount) + ' ر.س';
+    html +=   ' <span class="overdue-months">(';
+    var rentMonthsTxt = [];
+    for (var i = 0; i < s.overdueRentMonths.length; i++) {
+      rentMonthsTxt.push(formatMonthDisplay(s.overdueRentMonths[i].month));
+    }
+    html += rentMonthsTxt.join(' • ') + ')</span>';
+    html += '</div>';
+  }
+
+  if (s.overdueUtilitiesAmount > 0) {
+    html += '<div class="quick-overdue">';
+    html +=   '<strong>⚡ متأخرات كهرباء:</strong> ' + formatNumber(s.overdueUtilitiesAmount) + ' ر.س';
+    html +=   ' <span class="overdue-months">(';
+    var utilMonthsTxt = [];
+    for (var k = 0; k < s.overdueUtilitiesMonths.length; k++) {
+      utilMonthsTxt.push(formatMonthDisplay(s.overdueUtilitiesMonths[k].month));
+    }
+    html += utilMonthsTxt.join(' • ') + ')</span>';
+    html += '</div>';
+  }
+
+  if (s.otherOverdueAmount > 0) {
+    html += '<div class="quick-overdue">';
+    html +=   '<strong>📝 متأخرات أخرى:</strong> ' + formatNumber(s.otherOverdueAmount) + ' ر.س';
+    html +=   ' <span class="overdue-months">(';
+    var otherMonthsTxt = [];
+    for (var p = 0; p < s.otherOverdueMonths.length; p++) {
+      otherMonthsTxt.push(formatMonthDisplay(s.otherOverdueMonths[p].month));
+    }
+    html += otherMonthsTxt.join(' • ') + ')</span>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+
+  // ===== التفاصيل (يظهر عند التوسع) =====
+  if (isExpanded) {
+    html += '<div class="summary-card-details">';
+
+    // الجدول الشهري
+    html += '<h4 class="details-title">📅 الجدول التفصيلي بالأشهر</h4>';
+    html += '<div class="monthly-table-wrapper">';
+    html += '<table class="monthly-detail-table"><thead><tr>';
+    html += '<th>الشهر</th><th>الإيجار</th><th>الكهرباء</th><th>طريقة الدفع</th><th>📝 ملاحظات</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    for (var r = 0; r < s.monthlyRows.length; r++) {
+      var row = s.monthlyRows[r];
+      var rowClass = '';
+      if (row.rentStatus === 'unpaid' || row.utilitiesStatus === 'unpaid' || row.otherOverdue > 0) rowClass = 'row-overdue';
+      else if (row.rentStatus === 'paid' && (row.utilitiesStatus === 'paid' || row.utilitiesStatus === 'none' || !row.utilitiesStatus)) rowClass = 'row-complete';
+
+      html += '<tr class="' + rowClass + '">';
+      html +=   '<td><strong>' + formatMonthDisplay(row.month) + '</strong></td>';
+
+      // الإيجار
+      html += '<td>';
+      if (row.rentStatus === 'paid') {
+        html += '<span class="status-badge status-paid">' + formatNumber(row.rentAmount) + ' ✓</span>';
+      } else if (row.rentStatus === 'unpaid') {
+        html += '<span class="status-badge status-unpaid">' + formatNumber(row.rentAmount) + ' ❌</span>';
+      } else if (row.rentStatus === 'pending') {
+        html += '<span class="status-badge status-pending">' + formatNumber(row.rentAmount) + ' ⏳</span>';
+      } else if (row.rentStatus === 'none') {
+        html += '<span class="status-badge status-none">لا يوجد</span>';
+      } else {
+        html += '<span class="status-empty">—</span>';
+      }
+      html += '</td>';
+
+      // الكهرباء
+      html += '<td>';
+      if (row.utilitiesStatus === 'paid') {
+        html += '<span class="status-badge status-paid">' + formatNumber(row.utilitiesAmount) + ' ✓</span>';
+      } else if (row.utilitiesStatus === 'unpaid') {
+        html += '<span class="status-badge status-unpaid">' + formatNumber(row.utilitiesAmount) + ' ❌</span>';
+      } else if (row.utilitiesStatus === 'none') {
+        html += '<span class="status-badge status-none">لا يوجد</span>';
+      } else {
+        html += '<span class="status-empty">—</span>';
+      }
+      html += '</td>';
+
+      // طريقة الدفع + التاريخ
+      html += '<td>';
+      if (row.paymentMethod) {
+        var methodText = row.paymentMethod === 'manual' ? 'يدوي' : (row.paymentMethod === 'transfer' ? 'تحويل' : row.paymentMethod);
+        html += '<div style="font-size:11px"><strong>' + methodText + '</strong>';
+        if (row.paymentDate) html += '<br><span style="color:var(--gray-500)">' + row.paymentDate + '</span>';
+        html += '</div>';
+      } else {
+        html += '<span class="status-empty">—</span>';
+      }
+      html += '</td>';
+
+      // عمود الملاحظات
+      html += '<td>';
+      var hasNotes = row.notes || row.otherOverdue > 0;
+      if (hasNotes) {
+        var notesShort = row.notes || '';
+        var truncated = false;
+        if (notesShort.length > 30) {
+          notesShort = notesShort.substring(0, 30) + '...';
+          truncated = true;
+        }
+        // tooltip للنص الكامل
+        var tooltipText = (row.notes || '').replace(/"/g, '&quot;');
+        if (row.otherOverdue > 0) {
+          tooltipText += (row.notes ? ' | ' : '') + 'مبلغ متأخر: ' + formatNumber(row.otherOverdue) + ' ر.س';
+        }
+
+        html += '<div class="notes-cell" title="' + tooltipText + '" onclick="openInlineNoteEditor(\'' + s.id + '\', \'' + row.month + '\', event)">';
+        if (row.notes) {
+          html += '<div class="notes-text">' + escapeHtml(notesShort) + '</div>';
+        }
+        if (row.otherOverdue > 0) {
+          html += '<div class="notes-amount">💵 ' + formatNumber(row.otherOverdue) + ' ر.س</div>';
+        }
+        html += '</div>';
+      } else {
+        html += '<span class="notes-empty" onclick="openInlineNoteEditor(\'' + s.id + '\', \'' + row.month + '\', event)" title="انقر لإضافة ملاحظة">+ إضافة</span>';
+      }
+      html += '</td>';
+
+      // زر تعديل
+      html += '<td><button class="btn-edit-row" onclick="openMonthlyModalFromSummary(\'' + s.id + '\', \'' + row.month + '\')" title="تعديل">✏️</button></td>';
+
+      html += '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+
+    // الملخص المالي التفصيلي
+    html += '<div class="details-summary">';
+    html +=   '<h4 class="details-title">📊 الملخص المالي</h4>';
+    html +=   '<div class="financial-summary-grid">';
+
+    // الإيجار
+    html +=     '<div class="financial-block">';
+    html +=       '<div class="financial-block-title">الإيجار</div>';
+    html +=       '<div class="financial-row"><span>إجمالي:</span><strong>' + formatNumber(s.totalRent) + ' ر.س</strong></div>';
+    html +=       '<div class="financial-row success"><span>المدفوع:</span><strong>' + formatNumber(s.paidRentAmount) + ' ر.س</strong></div>';
+    html +=       '<div class="financial-row"><span>المتبقي:</span><strong>' + formatNumber(s.remainingRent) + ' ر.س</strong></div>';
+    if (s.overdueRentAmount > 0) {
+      html +=     '<div class="financial-row danger"><span>متأخرات:</span><strong>' + formatNumber(s.overdueRentAmount) + ' ر.س</strong></div>';
+    }
+    html +=     '</div>';
+
+    // الكهرباء (بدون إجمالي - فقط المتأخرات)
+    html +=     '<div class="financial-block">';
+    html +=       '<div class="financial-block-title">الكهرباء والماء</div>';
+    if (s.overdueUtilitiesAmount > 0) {
+      html +=     '<div class="financial-row danger"><span>متأخرات:</span><strong>' + formatNumber(s.overdueUtilitiesAmount) + ' ر.س</strong></div>';
+      html +=     '<div class="financial-row" style="font-size:11px;color:var(--gray-500)"><span>أشهر:</span><span>';
+      var months = [];
+      for (var x = 0; x < s.overdueUtilitiesMonths.length; x++) {
+        months.push(formatMonthDisplay(s.overdueUtilitiesMonths[x].month) + ' (' + formatNumber(s.overdueUtilitiesMonths[x].amount) + ')');
+      }
+      html += months.join('، ');
+      html +=     '</span></div>';
+    } else {
+      html +=     '<div class="financial-row success"><span>الحالة:</span><strong>لا توجد متأخرات ✓</strong></div>';
+    }
+    html +=     '</div>';
+
+    // مجموع المتأخرات (بطاقة جديدة بارزة)
+    if (s.totalOverdue > 0) {
+      html +=   '<div class="financial-block total-overdue-block">';
+      html +=     '<div class="financial-block-title">⚠️ مجموع المتأخرات</div>';
+      html +=     '<div class="total-overdue-amount">' + formatNumber(s.totalOverdue) + ' ر.س</div>';
+      html +=     '<div class="overdue-breakdown">';
+      if (s.overdueRentAmount > 0) {
+        html +=   '<div class="breakdown-row"><span>❗ متأخرات إيجار:</span><strong>' + formatNumber(s.overdueRentAmount) + '</strong></div>';
+        var rentMonthsArr = [];
+        for (var rm = 0; rm < s.overdueRentMonths.length; rm++) {
+          rentMonthsArr.push(formatMonthDisplay(s.overdueRentMonths[rm].month) + ' (' + formatNumber(s.overdueRentMonths[rm].amount) + ')');
+        }
+        html += '<div class="breakdown-detail">' + rentMonthsArr.join('، ') + '</div>';
+      }
+      if (s.overdueUtilitiesAmount > 0) {
+        html +=   '<div class="breakdown-row"><span>⚡ متأخرات كهرباء:</span><strong>' + formatNumber(s.overdueUtilitiesAmount) + '</strong></div>';
+        var utilMonthsArr = [];
+        for (var um = 0; um < s.overdueUtilitiesMonths.length; um++) {
+          utilMonthsArr.push(formatMonthDisplay(s.overdueUtilitiesMonths[um].month) + ' (' + formatNumber(s.overdueUtilitiesMonths[um].amount) + ')');
+        }
+        html += '<div class="breakdown-detail">' + utilMonthsArr.join('، ') + '</div>';
+      }
+      if (s.otherOverdueAmount > 0) {
+        html +=   '<div class="breakdown-row"><span>📝 متأخرات أخرى:</span><strong>' + formatNumber(s.otherOverdueAmount) + '</strong></div>';
+        var otherMonthsArr = [];
+        for (var om = 0; om < s.otherOverdueMonths.length; om++) {
+          var omItem = s.otherOverdueMonths[om];
+          var noteText = omItem.notes ? (' - ' + (omItem.notes.length > 25 ? omItem.notes.substring(0, 25) + '...' : omItem.notes)) : '';
+          otherMonthsArr.push(formatMonthDisplay(omItem.month) + ' (' + formatNumber(omItem.amount) + ')' + noteText);
+        }
+        html += '<div class="breakdown-detail">' + otherMonthsArr.join(' • ') + '</div>';
+      }
+      html +=     '</div>';
+      html +=   '</div>';
+    }
+
+    html +=   '</div>';
+    html += '</div>';
+
+    html += '</div>'; // summary-card-details
+  }
+
+  html += '</div>'; // summary-card
+  return html;
+}
+
+/**
+ * توسع/طي بطاقة
+ */
+function toggleSummaryCard(id) {
+  expandedSummaryCards[id] = !expandedSummaryCards[id];
+  renderSummaryCards();
+}
+
+/**
+ * توسيع كل البطاقات الظاهرة
+ */
+function expandAllSummary() {
+  if (!summaryData || summaryData.length === 0) return;
+  for (var i = 0; i < summaryData.length; i++) {
+    expandedSummaryCards[summaryData[i].id] = true;
+  }
+  renderSummaryCards();
+  showToast('تم توسيع كل البطاقات', 'success');
+}
+
+/**
+ * طي كل البطاقات
+ */
+function collapseAllSummary() {
+  expandedSummaryCards = {};
+  renderSummaryCards();
+  showToast('تم طي كل البطاقات', 'success');
+}
+
+/**
+ * تحديث ملخص شقة واحدة محلياً (بعد حفظ بيانات شهر)
+ * يعيد حساب الإحصائيات للشقة المعنية من البيانات المحلية في allMonthlyData
+ */
+function updateSummaryCardLocally(apartmentId) {
+  if (!summaryData || summaryData.length === 0) return; // لم يُحمّل بعد
+
+  var apt = findApartmentById(apartmentId);
+  if (!apt) return;
+
+  // إيجاد ملخص الشقة في summaryData
+  var summaryIndex = -1;
+  for (var i = 0; i < summaryData.length; i++) {
+    if (summaryData[i].id === apartmentId) {
+      summaryIndex = i;
+      break;
+    }
+  }
+  if (summaryIndex === -1) return;
+
+  // إعادة بناء الملخص لهذه الشقة من البيانات المحلية
+  var aptMonthlyData = allMonthlyData[apartmentId] || {};
+  var rebuilt = buildApartmentSummaryLocally(apt, aptMonthlyData);
+
+  // استبدال الملخص القديم
+  summaryData[summaryIndex] = rebuilt;
+}
+
+/**
+ * إعادة بناء ملخص شقة في الفرونت إند (نسخة مطابقة لـ buildApartmentSummary في Code.gs)
+ */
+function buildApartmentSummaryLocally(apt, monthlyData) {
+  var contractMonths = listContractMonthsLocally(apt.startDate, apt.endDate);
+  var totalRent = parseFloat(apt.totalRent) || 0;
+  var paidRentAmount = 0;
+  var paidRentCount = 0;
+  var overdueRentAmount = 0;
+  var overdueRentMonths = [];
+  var overdueUtilitiesAmount = 0;
+  var overdueUtilitiesMonths = [];
+  var otherOverdueAmount = 0;
+  var otherOverdueMonths = [];
+  var monthlyRows = [];
+
+  for (var i = 0; i < contractMonths.length; i++) {
+    var month = contractMonths[i];
+    var data = monthlyData[month] || {};
+    var rentStatus = data.rentStatus || '';
+    var utilitiesStatus = data.utilitiesStatus || '';
+    var rentAmount = parseFloat(data.rentAmount) || 0;
+    var utilitiesAmount = parseFloat(data.utilitiesAmount) || 0;
+    var notes = data.notes || '';
+    var otherOverdue = parseFloat(data.otherOverdue) || 0;
+
+    var displayRentStatus = rentStatus;
+    var displayRentAmount = rentAmount;
+
+    if (!rentStatus) {
+      if (apt.fullyPaid) {
+        displayRentStatus = 'paid';
+        var due1 = findDuePaymentForMonth(apt, month);
+        displayRentAmount = due1 ? due1.amount : (totalRent / contractMonths.length);
+      } else {
+        var due2 = findDuePaymentForMonth(apt, month);
+        if (due2) {
+          displayRentStatus = 'pending';
+          displayRentAmount = due2.amount;
+        } else {
+          displayRentStatus = 'none';
+          displayRentAmount = 0;
+        }
+      }
+    }
+
+    if (displayRentStatus === 'paid') {
+      paidRentAmount += displayRentAmount;
+      paidRentCount++;
+    } else if (displayRentStatus === 'unpaid') {
+      overdueRentAmount += displayRentAmount;
+      overdueRentMonths.push({ month: month, amount: displayRentAmount });
+    }
+
+    if (utilitiesStatus === 'unpaid' && utilitiesAmount > 0) {
+      overdueUtilitiesAmount += utilitiesAmount;
+      overdueUtilitiesMonths.push({ month: month, amount: utilitiesAmount });
+    }
+
+    if (otherOverdue > 0) {
+      otherOverdueAmount += otherOverdue;
+      otherOverdueMonths.push({
+        month: month,
+        amount: otherOverdue,
+        notes: notes
+      });
+    }
+
+    monthlyRows.push({
+      month: month,
+      rentStatus: displayRentStatus,
+      rentAmount: displayRentAmount,
+      utilitiesStatus: utilitiesStatus,
+      utilitiesAmount: utilitiesAmount,
+      paymentMethod: data.paymentMethod || '',
+      paymentDate: data.paymentDate || '',
+      notes: notes,
+      otherOverdue: otherOverdue
+    });
+  }
+
+  var remainingRent = totalRent - paidRentAmount - overdueRentAmount;
+  if (remainingRent < 0) remainingRent = 0;
+
+  var endDate = apt.endDate ? new Date(apt.endDate) : null;
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var daysRemaining = null;
+  if (endDate) {
+    daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+  }
+
+  var totalOverdue = overdueRentAmount + overdueUtilitiesAmount + otherOverdueAmount;
+
+  return {
+    id: apt.id,
+    contractNumber: apt.contractNumber || '',
+    apartmentName: apt.apartmentName || '',
+    tenantName: apt.tenantName || '',
+    startDate: apt.startDate || '',
+    endDate: apt.endDate || '',
+    totalRent: totalRent,
+    paymentsCount: apt.paymentsCount || 0,
+    fullyPaid: apt.fullyPaid === true,
+    externalCode: apt.externalCode || '',
+    contractMonthsCount: contractMonths.length,
+    daysRemaining: daysRemaining,
+    paidRentAmount: Math.round(paidRentAmount * 100) / 100,
+    paidRentCount: paidRentCount,
+    overdueRentAmount: Math.round(overdueRentAmount * 100) / 100,
+    overdueRentMonths: overdueRentMonths,
+    remainingRent: Math.round(remainingRent * 100) / 100,
+    overdueUtilitiesAmount: Math.round(overdueUtilitiesAmount * 100) / 100,
+    overdueUtilitiesMonths: overdueUtilitiesMonths,
+    otherOverdueAmount: Math.round(otherOverdueAmount * 100) / 100,
+    otherOverdueMonths: otherOverdueMonths,
+    totalOverdue: Math.round(totalOverdue * 100) / 100,
+    monthlyRows: monthlyRows
+  };
+}
+
+/**
+ * إنتاج قائمة كل الأشهر بين تاريخ البداية والنهاية (نسخة فرونت إند)
+ */
+function listContractMonthsLocally(startDate, endDate) {
+  if (!startDate || !endDate) return [];
+  var start = new Date(startDate);
+  var end = new Date(endDate);
+  if (start > end) return [];
+
+  var months = [];
+  var current = new Date(start.getFullYear(), start.getMonth(), 1);
+  var endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+  while (current <= endMonth) {
+    var y = current.getFullYear();
+    var m = String(current.getMonth() + 1).padStart(2, '0');
+    months.push(y + '-' + m);
+    current.setMonth(current.getMonth() + 1);
+  }
+  return months;
+}
+
+/**
+ * تحديث ملخص عدة شقق دفعة واحدة (للتعديل الجماعي)
+ */
+function updateMultipleSummaryCardsLocally(apartmentIds) {
+  if (!apartmentIds || apartmentIds.length === 0) return;
+  for (var i = 0; i < apartmentIds.length; i++) {
+    updateSummaryCardLocally(apartmentIds[i]);
+  }
+}
+
+/**
+ * فتح modal صغير للتعديل السريع على الملاحظة والمبلغ المتأخر فقط
+ */
+function openInlineNoteEditor(apartmentId, month, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  var apt = findApartmentById(apartmentId);
+  if (!apt) return;
+
+  var existing = (allMonthlyData[apartmentId] && allMonthlyData[apartmentId][month]) || {};
+
+  var currentNotes = existing.notes || '';
+  var currentAmount = existing.otherOverdue || 0;
+
+  // prompt مزدوج بسيط
+  var newNotes = prompt('📝 ملاحظة لشهر ' + formatMonthDisplay(month) + ':\n(اتركها فاضية لحذف الملاحظة)', currentNotes);
+  if (newNotes === null) return; // إلغاء
+
+  var newAmountStr = prompt('💵 مبلغ متأخر (ر.س):\n(0 لعدم وجود مبلغ)', String(currentAmount));
+  if (newAmountStr === null) return; // إلغاء
+
+  var newAmount = parseFloat(newAmountStr) || 0;
+
+  // بناء بيانات الحفظ - نحافظ على باقي الحقول
+  var saveData = {
+    apartmentId: apartmentId,
+    month: month,
+    rentStatus: existing.rentStatus || '',
+    utilitiesStatus: existing.utilitiesStatus || '',
+    paymentMethod: existing.paymentMethod || '',
+    paymentDate: existing.paymentDate || '',
+    rentAmount: existing.rentAmount || 0,
+    utilitiesAmount: existing.utilitiesAmount || 0,
+    notes: newNotes,
+    otherOverdue: newAmount
+  };
+
+  showTopLoader(true);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      showTopLoader(false);
+      if (result && result.success) {
+        // تحديث cache محلياً
+        if (!monthlyDataCache[month]) monthlyDataCache[month] = {};
+        monthlyDataCache[month][apartmentId] = {
+          rentStatus: saveData.rentStatus,
+          utilitiesStatus: saveData.utilitiesStatus,
+          paymentMethod: saveData.paymentMethod,
+          paymentDate: saveData.paymentDate,
+          rentAmount: saveData.rentAmount,
+          utilitiesAmount: saveData.utilitiesAmount,
+          notes: saveData.notes,
+          otherOverdue: saveData.otherOverdue
+        };
+
+        if (!allMonthlyData[apartmentId]) allMonthlyData[apartmentId] = {};
+        allMonthlyData[apartmentId][month] = monthlyDataCache[month][apartmentId];
+
+        // تحديث ملخص الشقة وإعادة الرسم
+        updateSummaryCardLocally(apartmentId);
+        renderSummary();
+        renderTable();
+        renderInfoCards();
+
+        showToast('تم حفظ الملاحظة', 'success');
+      } else {
+        showToast('فشل الحفظ: ' + (result ? result.message : ''), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      showTopLoader(false);
+      showToast('خطأ: ' + (err.message || err), 'error');
+    })
+    .saveMonthlyData(saveData);
+}
+
+/**
+ * فتح modal تعديل بيانات الشهر من صفحة الملخص
+ */
+function openMonthlyModalFromSummary(apartmentId, month) {
+  // تعيين الشهر الحالي
+  currentMonth = month;
+  document.getElementById('tableMonthFilter').value = month;
+  document.getElementById('infoMonthFilter').value = month;
+
+  // التأكد من وجود بيانات الشهر في cache
+  if (!monthlyDataCache[month]) {
+    // جلب بيانات الشهر أولاً ثم فتح modal
+    showTopLoader(true);
+    google.script.run
+      .withSuccessHandler(function(result) {
+        showTopLoader(false);
+        if (result && result.success) {
+          monthlyDataCache[month] = result.data || {};
+          if (result.allMonthlyData) allMonthlyData = result.allMonthlyData;
+          openMonthlyModal(apartmentId);
+        }
+      })
+      .withFailureHandler(function(err) {
+        showTopLoader(false);
+        showToast('خطأ: ' + err.message, 'error');
+      })
+      .getMonthlyData(month);
+  } else {
+    openMonthlyModal(apartmentId);
+  }
+}
+
+/**
+ * إعداد event listeners لصفحة الملخص
+ */
+function setupSummaryListeners() {
+  // الفلاتر
+  var filterBtns = document.querySelectorAll('.summary-filter-btn');
+  for (var i = 0; i < filterBtns.length; i++) {
+    filterBtns[i].addEventListener('click', function() {
+      var btns = document.querySelectorAll('.summary-filter-btn');
+      for (var j = 0; j < btns.length; j++) btns[j].classList.remove('active');
+      this.classList.add('active');
+      summaryFilter = this.getAttribute('data-filter');
+      renderSummaryCards();
+    });
+  }
+
+  // البحث
+  var searchInput = document.getElementById('summarySearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      summarySearchTerm = this.value.trim();
+      renderSummaryCards();
+    });
+  }
+}
+
+
+/**
+ * تحميل قائمة أكواد الشقق من نظام الفواتير
+ * @param {boolean} silent - لا تعرض toast على النجاح
+ * @param {string} selectedCode - الكود اللي يجب اختياره بعد التحميل
+ */
+function loadBillingCodes(silent, selectedCode) {
+  var select = document.getElementById('externalCode');
+  var status = document.getElementById('externalCodeStatus');
+  if (!select) return;
+
+  // إذا فيه cache، استخدمه
+  if (billingCodesCache) {
+    fillBillingCodesSelect(billingCodesCache, selectedCode);
+    if (status) status.textContent = '✓ ' + billingCodesCache.length + ' كود متاح';
+    return;
+  }
+
+  if (status) status.textContent = '⏳ جاري جلب الأكواد...';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success) {
+        billingCodesCache = result.data || [];
+        fillBillingCodesSelect(billingCodesCache, selectedCode);
+        if (status) {
+          status.textContent = '✓ ' + billingCodesCache.length + ' كود متاح';
+          status.style.color = '#16a34a';
+        }
+        if (!silent) showToast('تم جلب ' + billingCodesCache.length + ' كود من نظام الفواتير', 'success');
+      } else {
+        if (status) {
+          status.textContent = '⚠ ' + (result ? result.message : 'فشل الجلب');
+          status.style.color = '#dc2626';
+        }
+        if (!silent) showToast('فشل جلب الأكواد: ' + (result ? result.message : ''), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (status) {
+        status.textContent = '⚠ خطأ: ' + (err.message || err);
+        status.style.color = '#dc2626';
+      }
+      if (!silent) showToast('خطأ: ' + err.message, 'error');
+    })
+    .getBillingApartmentCodes();
+}
+
+function fillBillingCodesSelect(codes, selectedCode) {
+  var select = document.getElementById('externalCode');
+  if (!select) return;
+
+  var html = '<option value="">— لا يوجد ربط —</option>';
+  for (var i = 0; i < codes.length; i++) {
+    var c = codes[i];
+    var selected = (c.code === selectedCode) ? ' selected' : '';
+    html += '<option value="' + escapeHtml(c.code) + '"' + selected + '>' +
+            escapeHtml(c.displayName) + ' [' + escapeHtml(c.code) + ']' +
+            '</option>';
+  }
+  select.innerHTML = html;
+}
+
+/**
+ * جلب مبلغ الكهرباء والماء من نظام الفواتير للشقة الحالية + الشهر الحالي
+ */
+function fetchBillingForMonth() {
+  var apartmentId = document.getElementById('monthlyApartmentId').value;
+  var month = document.getElementById('monthlyMonth').value;
+  var apt = findApartmentById(apartmentId);
+  var statusEl = document.getElementById('billingFetchStatus');
+
+  if (!apt) return;
+  if (!apt.externalCode) {
+    if (statusEl) {
+      statusEl.textContent = '⚠ هذه الشقة غير مربوطة بنظام الفواتير';
+      statusEl.style.color = '#dc2626';
+    }
+    return;
+  }
+  if (!month) {
+    showToast('الشهر غير محدد', 'warning');
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = '⏳ جاري جلب الفاتورة...';
+    statusEl.style.color = 'var(--gray-500)';
+  }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result) {
+        if (statusEl) {
+          statusEl.textContent = '⚠ لم يستجب الخادم';
+          statusEl.style.color = '#dc2626';
+        }
+        return;
+      }
+
+      if (result.success) {
+        document.getElementById('monthlyUtilitiesAmount').value = result.total || 0;
+
+        if (statusEl) {
+          if (result.count > 0) {
+            var details = '';
+            if (result.details && result.details.length > 0) {
+              var periodsText = result.details.map(function(d) { return d.period; }).join(' + ');
+              details = ' (' + periodsText + ')';
+            }
+            statusEl.textContent = '✓ ' + result.message + details +
+                                   ' — المجموع: ' + formatNumber(result.total) + ' ر.س';
+            statusEl.style.color = '#16a34a';
+          } else {
+            statusEl.textContent = 'ℹ ' + result.message;
+            statusEl.style.color = 'var(--gray-500)';
+          }
+        }
+      } else {
+        if (statusEl) {
+          statusEl.textContent = '⚠ ' + result.message;
+          statusEl.style.color = '#dc2626';
+        }
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (statusEl) {
+        statusEl.textContent = '⚠ خطأ: ' + (err.message || err);
+        statusEl.style.color = '#dc2626';
+      }
+    })
+    .getBillingTotalForMonth(apt.externalCode, month);
+}
+</script>
 </body>
 </html>
