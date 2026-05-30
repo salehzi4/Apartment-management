@@ -83,6 +83,7 @@
             <div class="bar-left">
                 <span class="conn"><i class="fas fa-database"></i> قاعدة موحّدة — Supabase</span>
                 <span class="user-box"><i class="fas fa-user-circle"></i><span id="userEmail"></span></span>
+                <button class="logout" id="refreshBtn" title="تحديث البيانات"><i class="fas fa-rotate"></i></button>
                 <button class="logout" id="logoutBtn">خروج</button>
             </div>
         </div>
@@ -100,26 +101,43 @@
         var gate = document.getElementById('gate');
         var app  = document.getElementById('app');
 
+        var currentTarget = 'apts';
+        var appShown = false;
+
         function showApp(user) {
             gate.style.display = 'none';
             app.classList.add('shown');
             document.getElementById('userEmail').textContent = user.email || '';
-            activate('apts'); // يحمّل أول iframe بعد تأكّد الجلسة
+            appShown = true;
+            // (أعد)تحميل التبويب النشط بمصدر طازج ليجلب البيانات بعد جاهزية الجلسة
+            loadFrame(currentTarget, true);
         }
         function showGate() {
+            appShown = false;
             app.classList.remove('shown');
             gate.style.display = 'flex';
-            // أفرغ مصادر الـ iframes حتى لا تُحمّل قبل الدخول
             ['frame-apts','frame-bills'].forEach(function(id){
-                var f = document.getElementById(id); f.src = ''; });
+                var f = document.getElementById(id); f.src = 'about:blank'; });
+        }
+
+        // يحمّل/يعيد تحميل iframe التبويب. force=true يعيد التحميل دائماً.
+        function loadFrame(target, force) {
+            var frame = document.getElementById('frame-' + target);
+            if (!frame) return;
+            if (force || !frame.src || frame.src === 'about:blank' ||
+                frame.src.indexOf('about:blank') !== -1) {
+                // كسر الكاش لضمان تحميل جديد يقرأ الجلسة الحالية
+                frame.src = frame.dataset.src + '?t=' + Date.now();
+            }
         }
 
         function activate(target) {
+            currentTarget = target;
             document.querySelectorAll('.tab').forEach(function(t){
                 t.classList.toggle('active', t.dataset.target === target); });
             document.querySelectorAll('.frame').forEach(function(f){ f.classList.remove('active'); });
             var frame = document.getElementById('frame-' + target);
-            if (frame.dataset.src && !frame.src) frame.src = frame.dataset.src;
+            if (appShown) loadFrame(target, false); // حمّله إن لم يكن محمّلاً
             frame.classList.add('active');
         }
         document.querySelectorAll('.tab').forEach(function(t){
@@ -137,6 +155,7 @@
             try {
                 var res = await window.Auth.signIn(email, pass);
                 if (res.error) { err.textContent = 'تعذّر الدخول: ' + res.error.message; }
+                // النجاح يُعالَج في onChange (يستدعي showApp)
             } catch (e) { err.textContent = 'خطأ: ' + e.message; }
             btn.disabled = false; btn.textContent = 'دخول';
         }
@@ -148,13 +167,24 @@
         document.getElementById('logoutBtn').addEventListener('click', async function(){
             await window.Auth.signOut();
         });
-
-        // تتبّع حالة الجلسة (تشمل أول تحميل، الدخول، والخروج)
-        window.Auth.onChange(function(_event, session){
-            if (session && session.user) showApp(session.user); else showGate();
+        // تحديث البيانات (مفيد في وضع التطبيق على الشاشة الرئيسية بلا زر تحديث)
+        document.getElementById('refreshBtn').addEventListener('click', function(){
+            if (appShown) loadFrame(currentTarget, true);
         });
-        // فحص أولي للجلسة المحفوظة
-        window.Auth.getUser().then(function(user){ if (user) showApp(user); else showGate(); });
+
+        // تتبّع حالة الجلسة. نتفادى إعادة التحميل المكررة بمقارنة الحالة السابقة.
+        var lastSignedIn = null;
+        window.Auth.onChange(function(_event, session){
+            var signedIn = !!(session && session.user);
+            if (signedIn && lastSignedIn !== true) { lastSignedIn = true; showApp(session.user); }
+            else if (!signedIn && lastSignedIn !== false) { lastSignedIn = false; showGate(); }
+        });
+        // فحص أولي: ننتظر getSession (يقرأ الجلسة المحفوظة) قبل أي قرار، تفادياً للوميض
+        window.sbClient.auth.getSession().then(function(res){
+            var session = res && res.data ? res.data.session : null;
+            if (session && session.user) { lastSignedIn = true; showApp(session.user); }
+            else { lastSignedIn = false; showGate(); }
+        }).catch(function(){ lastSignedIn = false; showGate(); });
     </script>
 </body>
 </html>
